@@ -1,0 +1,201 @@
+html, body{
+  height: 100%;
+  background: #f0f8ff;
+}
+*{
+  margin: 0;
+}
+  .lp-top{
+    background: linear-gradient(90deg, #0000ff, #00ff80);
+    height: 100%;
+  }
+  .lp-brand{
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+  }
+  .lp-brand:hover{
+    color: #fff;
+  }
+  .lp-nav-link{
+    color: #fff;
+  }
+  .lp-nav-link:hover{
+    color: #fff;
+    font-weight: 600;
+  }
+  .lp-lead{
+    color: #fff;
+    font-size: 1.4em;
+  }
+  .lp-btn{
+    border: solid 1px #fff;
+    color: #fff;
+    border-radius: 0;
+    margin: 10px;
+  }
+  .lp-btn a{
+    text-decoration: none;
+    color: #fff;
+  }
+  .lp-btn:hover, .lp-btn a:hover{
+    color: #0000ff;
+    background: #fff;
+  }
+  .i-youtube{
+    color: #ff0000;
+  }
+  .intl-brand{
+    color: #ff0080;
+  }
+  .i-cluster{
+    color: #00ffff;
+  }
+  .intl-heading{
+    color: #333;
+  }
+  .lp-heading, .intl-brand-en{
+    font-family: 'Lemonada', cursive;
+    letter-spacing: -2px;
+  }
+  .lp-heading{
+    color: #ff0080;
+  }
+  .intl-brand-en{
+    position: relative;
+    text-shadow: 2px 2px 3px #ffff00;
+  }
+  .intl-brand-en::before{
+    position: absolute;
+    content: 'Casino Oceanblue';
+    background: linear-gradient(90deg, #0000ff, #00ff80);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #0000ff;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    text-shadow: none;
+  }
+  .lp-header{
+    background: rgba(0,0,51,0.8);
+  }
+  .lp-header-toggled{
+    background: rgba(0,0,51);
+  }
+  .lp-money {
+    animation: frying 8s linear;
+    font-size: 0.8em;
+    display: inline-block;
+    height: 1em;
+    line-height: 1em;
+    position: fixed;
+    top: -1em;
+    z-index: 100;
+  }
+  .intl-footer{
+    border-top: solid 1px #dcdcdc;
+  }
+  .intl-animation{
+    transition : all 1000ms;
+  }
+  .intl-fade-in{
+    opacity : 0;
+    transform : translate(0, 100px);
+  }
+  .intl-fade-in.scrolled, .intl-slide-in-right.scrolled{
+    opacity : 1;
+    transform : translate(0, 0);
+  }
+  .intl-slide-in-right{
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  .intl-btn-youtube{
+    color: #fff;
+    border: solid 1px #ff0000;
+    border-radius: 0;
+    background: #ff0000;
+  }
+  .intl-btn-youtube:hover, .intl-btn-cluster:hover{
+    color: #fff;
+  }
+  .intl-btn-cluster{
+    color: #333;
+    border: solid 1px #00ffff;
+    border-radius: 0;
+    background: #00ffff;
+  }
+  .intl-btn-play{
+    border: solid 1px #0000ff;
+    color: #0000ff;
+    border-radius: 0;
+    margin: 10px;
+    text-decoration: none;
+    color: #0000ff;
+  }
+  .intl-btn-play:hover{
+    background: #0000ff;
+    color: #fff;
+  }
+  .intl-btn-twitter, .intl-btn-instagram, .intl-serif-en{
+    font-family: 'Abril Fatface', cursive;
+  }
+  .intl-btn-twitter, .intl-btn-instagram{
+    padding: 10px 15px;
+    font-size: 1.2em;
+  }
+  .intl-btn-twitter{
+    color: #1da1f2;
+    background: #fff;
+    border-radius: 0;
+    border: solid 1px #1da1f2;
+  }
+  .intl-btn-twitter:hover{
+    color: #fff;
+    background: #1da1f2;
+  }
+  .intl-btn-instagram{
+    color: #FD1D1D;
+    background: #fff;
+    border-radius: 0;
+    border: solid 1px #FD1D1D;
+  }
+  .intl-btn-instagram:hover{
+    color: #fff;
+    background: #FD1D1D;
+  }
+  @keyframes frying {
+    0% {
+      transform:translateY(0) rotateY(0);
+      color: #ffa500;
+    }
+    25%{
+      color: #ffd700;
+    }
+    50% {
+      color: #DAA520;
+    }
+    75% {
+      color: #ffd700;
+    }
+    100% {
+      transform:translateY(calc(100vh + 1em)) rotateY(3600deg);
+      color: #ffa500
+    }
+  }
+  @media screen and (max-width:768px) {
+    .lp-top{
+      background: linear-gradient(135deg, #0000ff, #00ff80);
+    }
+    .lp-img{
+      visibility: hidden;
+    }
+    .lp-heading{
+      font-size: 2.5em;
+    }
+  }
+.rk-h1 {
+  text-shadow: 0 1px 0 #ccc,0 2px 0 #c9c9c9,0 3px 0 #bbb,0 4px 0 #b9b9b9,0 5px 0 #aaa,0 6px 1px rgba(0,0,0,.1),0 0 5px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.3),0 3px 5px rgba(0,0,0,.2),0 5px 10px rgba(0,0,0,.25),0 10px 10px rgba(0,0,0,.2),0 20px 20px rgba(0,0,0,.15);
+}
