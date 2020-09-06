@@ -118,6 +118,8 @@ module.exports = (io) => {
                         gameInfo.id = "";
                         gameInfo.users = [];
                         gameInfo.cards = [];
+                        gameInfo.next = "";
+                        gameInfo.token = require('crypto').randomBytes(6).toString('hex');
                         // ルームを新規作成して登録
                         let gameId = require('crypto').randomBytes(12).toString('hex');
                         userInfo.gameId = gameId;
@@ -145,6 +147,26 @@ module.exports = (io) => {
                      // 開始フラグが立っていれば他の参加者に通知
                      if(isStart){
                          io.to(userInfo.gameId).emit("start", "Game started.");
+                         redisJsonGet(userInfo.gameId, (error, gameInfo) => {
+                             let tried = 0;
+                             // 3回試行してもいなければ強制終了
+                             while(tried < 3){
+                                 let startPos = gameInfo.users[0];
+                                 // 先頭の人が存在するか確認
+                                 redis.exists("client-" + startPos, (error, res) => {
+                                     if(parseInt(res) === 1){
+                                         io.to(startPos).emit("turn", {"token":gameInfo.token});
+                                         io.to(userInfo.gameId).emit("wait", {});
+                                         break;
+                                     }
+                                 });
+                                 tried++;
+                             }
+                             // 試行失敗時の処理
+                             if(tried >= 3){
+                                 io.to(userInfo.gameId).emit("finish", {"status":"exception"});
+                             }
+                         });
                      }
                 });
             }
@@ -188,7 +210,7 @@ module.exports = (io) => {
                        gameInfo.users.some((v, i) => {
                            if (v===socket.id) gameInfo.users.splice(i,1);
                        });
-                       redisJsonSet('game-' + userInfo.gameId, gameInfo);
+                       redisJsonSet(userInfo.gameId, gameInfo);
                    });
                }
             });
