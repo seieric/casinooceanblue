@@ -117,11 +117,23 @@ module.exports = (io) => {
                         let gameInfo = {};
                         gameInfo.id = "";
                         gameInfo.users = [];
+                        gameInfo.cards = [];
                         // ルームを新規作成して登録
                         let gameId = require('crypto').randomBytes(12).toString('hex');
                         userInfo.gameId = gameId;
                         gameInfo.id = gameId;
                         gameInfo.users.push(socket.id);
+                        // トランプも初期化する
+                        for(let i=0;i<10;i++){
+                            gameInfo.cards[i] = gameInfo.cards[i+10] = i;
+                        }
+                        let tmp, n;
+                        for(let i=0;i<20;i++){
+                            n = Math.floor(Math.random() * 20);
+                            tmp = gameInfo.cards[n];
+                            gameInfo.cards[n] = gameInfo.cards[i];
+                            gameInfo.cards[i] = tmp;
+                        }
                         redisJsonSet(gameId, gameInfo);
                         // ゲームを待ち列に登録
                         redis.rpush('rooms-waiting', [gameId]);
