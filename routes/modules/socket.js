@@ -18,7 +18,7 @@ module.exports = (io) => {
      */
     function redisJsonGet(key, func){
         redis.get(key, (error, res) => {
-           func(error, JSON.parse(res));
+            func(error, JSON.parse(res));
         });
     }
     /**
@@ -45,7 +45,7 @@ module.exports = (io) => {
     io.use((socket, next) => {
         let token = socket.handshake.query.token;
         db.get("SELECT * FROM users WHERE token=?", [token], (error, row) => {
-            if(row === null || row === "" || row.name === ""){
+            if(row === null || row === ""){
                 return next(new Error('authentication error'));
             }else{
                 redis.exists("client-" + socket.id, (error, res) => {
@@ -81,11 +81,13 @@ module.exports = (io) => {
                 // 入室待ちのルームを検索
                  redis.exists('rooms-waiting', (error, res) => {
                     if(parseInt(res) === 1){
-                        console.log("chekc point 1");
                         // データが存在した場合
-                        let waitingGamesList = redis.lrange('rooms-waiting', 0, -1);
+                        let waitingGamesList = null;
+                        redis.lrange("rooms-waiting", 0, -1, (error, res) => {
+                            waitingGamesList = res;
+                        });
                         // 待ち列が空でないことの確認
-                        if(waitingGamesList !== null){
+                        if(waitingGamesList !== null && waitingGamesList[0] !== null){
                             let waitingGameId = waitingGamesList[0];
                             redisJsonGet(waitingGameId, (error, gameInfo) => {
                                 if(error){
@@ -138,7 +140,7 @@ module.exports = (io) => {
                         }
                         redisJsonSet(gameId, gameInfo);
                         // ゲームを待ち列に登録
-                        redis.rpush('rooms-waiting', [gameId]);
+                        redis.rpush('rooms-waiting', gameId);
                     }
 
                      // クライアントをルームに参加させ、ユーザー情報を登録
@@ -157,7 +159,7 @@ module.exports = (io) => {
                                      if(parseInt(res) === 1){
                                          io.to(startPos).emit("turn", {"token":gameInfo.token});
                                          io.to(userInfo.gameId).emit("wait", {});
-                                         break;
+                                         tried = 3;
                                      }
                                  });
                                  tried++;
@@ -181,7 +183,7 @@ module.exports = (io) => {
                 } else if (userInfo.gameId != null){
                     console.log(`[Socket.io]Client(${socket.id}) tried join the game again. Invalid request.`);
                 } else {
-                    redis.get("game-" + userInfo.gameId, (error, gameInfo) => {
+                    redis.get(userInfo.gameId, (error, gameInfo) => {
                         if (!error) {
                             let res = {};
                             res.first = gameInfo.cards[req.first];
