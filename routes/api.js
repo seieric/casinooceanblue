@@ -5,16 +5,6 @@ const reCaptchaSecret = '6Lds1rwZAAAAAMl_dCpHQQ_7w0v2dhpfbAEQL3MN';
 const sqlite = require('sqlite3').verbose();
 const db = new sqlite.Database('./db/development.sqlite');
 
-router.get('/count', function(req, res, next) {
-    db.get("SELECT COUNT(id) FROM users WHERE is_active = 1", (err, row) => {
-        if(err){
-            console.log(`[SQLite]${err}`);
-            res.status(500).send("Internal Server Error");
-        }else{
-            res.json(row['COUNT(id)']);
-        }
-    });
-});
 router.get('/ranking', function (req, res) {
    let ranking = {
        day: [
@@ -57,7 +47,6 @@ router.post('/start', function(req, res){
                    db.serialize(() => {
                        let stmt = db.prepare("UPDATE users SET name = ?, token = ?, updated_at = ? WHERE token = ?");
                        stmt.run([playerName, authToken, time, oldAuthToken]);
-                       console.log("update",res);
                    });
                }else{
                    //プレイヤー名を設定し、トークンを新規生成

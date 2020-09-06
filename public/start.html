@@ -24,7 +24,7 @@
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WJF4JMD" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
-    <noscript>このページはJavaScriptを使用します。お使いの環境ではJavaScriptが無効になっているため、利用できません。</noscript>
+    <noscript>このページはJavaScriptを使用します。お使いの環境ではJavaScriptが無効になっているため、ご利用できません。</noscript>
     <div class="container">
       <form>
             <div class="row justify-content-center">
@@ -47,19 +47,16 @@
     <script>
         $("#playBtn").click((e) => {
             let playerName = $("input[name=playername]").val();
-            console.log(playerName);
             if(playerName != null && playerName !== ""){
                 playerName = escape(playerName);
-                sessionStorage.setItem('playerName', playerName);
-                let authToken = sessionStorage.getItem('authToken');
+                localStorage.setItem('playerName', playerName);
+                let authToken = localStorage.getItem('authToken');
                 e.preventDefault();
                 grecaptcha.ready(function() {
                     grecaptcha.execute('6Lds1rwZAAAAAH9Dg60KDk8KefnUnIOtY9RC5bft', {action: 'submit'}).then(function(token) {
-                        $.post('http://localhost:3000/api/start', {token, playerName, authToken}, (data) => {
-                            console.log(data.status, data.token);
+                        $.post('/api/start', {token, playerName, authToken}, (data) => {
                             if(data.status === "success" && data.token != null && data.token !== ""){
-                                console.log("pass");
-                                sessionStorage.setItem('authToken', data.token);
+                                localStorage.setItem('authToken', data.token);
                                 window.location.href="/game.html";
                             }else{
                                 alert("認証に失敗しました。");

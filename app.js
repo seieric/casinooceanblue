@@ -3,15 +3,15 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-require('dotenv').config(); //環境変数のロード
+//環境変数をロード
+require('dotenv').config();
+//リクエストボディのパーサー
 const bodyParser = require('body-parser');
 
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 const app = express();
-
-const socket = require('./routes/modules/socket.js'); //Socket.io
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
