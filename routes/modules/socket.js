@@ -42,30 +42,37 @@ module.exports = (io) => {
     redis.del('rooms-waiting');
 
     // クライアントの認証
-    io.use((socket, next) => {
+    io.use( (socket, next) => {
         let token = socket.handshake.query.token;
+        let isAuthenticated = false;
+
         db.get("SELECT * FROM users WHERE token=?", [token], (error, row) => {
-            if(row === null || row === ""){
-                return next(new Error('authentication error'));
-            }else{
-                if(row.name === undefined){
-                    return next(new Error('authentication error'));
-                }
+            if(error){
+                return next(new Error("[SQLite]Something went wrong."));
+            }
+
+            if(row != null && row !== ""){
                 redis.exists("client-" + socket.id, (error, res) => {
                     // ユーザー情報が存在しなかった場合
                     if(parseInt(res) !== 1){
                         // ユーザーデータを初期化
-                        let userInfo = {};
-                        userInfo.gameId = "";
-                        userInfo.name = row.name;
-                        userInfo.score = 0;
+                        let userInfo = {
+                            gameId: "",
+                            name: row.name,
+                            score: 0
+                        };
                         // redisにユーザー情報を登録
                         redisJsonSet("client-" + socket.id, userInfo);
                         console.log(`[Socket.io]Client(${socket.id}) is registered to redis.`);
                     }
-                    return next();
                 });
+                isAuthenticated = true;
             }
+
+            if(!isAuthenticated){
+                return next(new Error('[Socket.io]Authentication error.'));
+            }
+            return next();
         });
     });
 
@@ -194,7 +201,7 @@ module.exports = (io) => {
                             if (res.first === res.second && res.first != null) {
                                 gameInfo.cards[req.first] = gameInfo.cards[req.second] = null;
                             }
-                            socket.to(userInfo.gameId).emit("cardNotify", res);
+                            io.to(userInfo.gameId).emit("cardNotify", res);
                         } else {
                             console.log("[Redis]" + error, "Unable to access game data.");
                         }
@@ -208,16 +215,16 @@ module.exports = (io) => {
             console.log(`[Socket.io]Client(${socket.id}) disconnected.`);
             // ユーザーをゲームから削除
             redisJsonGet("client-" + socket.id, (error, userInfo) => {
-               if(error){
-                   console.error("[Redis] Failed to get user data. > " + error);
-               }else{
-                   redisJsonGet(userInfo.gameId, (error, gameInfo) => {
-                       gameInfo.users.some((v, i) => {
-                           if (v===socket.id) gameInfo.users.splice(i,1);
-                       });
-                       redisJsonSet(userInfo.gameId, gameInfo);
-                   });
-               }
+                if(error){
+                    console.error("[Redis] Failed to get user data. > " + error);
+                }else{
+                    redisJsonGet(userInfo.gameId, (error, gameInfo) => {
+                        gameInfo.users.some((v, i) => {
+                            if (v===socket.id) gameInfo.users.splice(i,1);
+                        });
+                        redisJsonSet(userInfo.gameId, gameInfo);
+                    });
+                }
             });
             // 最後にデータも削除する
             redis.del("client-" + socket.id);
