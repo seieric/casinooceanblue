@@ -82,6 +82,7 @@ module.exports = (io) => {
                 // 待ち列が空でないことの確認
                 if(waitingGamesList != null && waitingGamesList != ""){
                     let waitingGameId = waitingGamesList[0];
+                    console.debug("[DEBUG] waitingGameId is now" + waitingGameId);
                     redisJsonGet(waitingGameId, (error, gameInfo) => {
                         console.debug("[DEBUG] gameInfo is now" + JSON.stringify(gameInfo));
                         if(error){
@@ -136,7 +137,11 @@ module.exports = (io) => {
                         gameInfo.cards[i] = tmp;
                     }
                     console.debug("[DEBUG] New gameInfo is ", JSON.stringify(gameInfo));
-                    redisJsonSet(gameInfo.id, gameInfo);
+                    let s = redisJsonSet(gameInfo.id, gameInfo);
+                    console.debug("[DEBUG] gameInfo is register to redis. " + s);
+                    redisJsonGet(gameInfo.id, (err, res) => {
+                        console.debug("[DEBUG] gameInfo is now. " + JSON.stringify(res));
+                    });
                     // ゲームを待ち列に登録
                     redis.rpush('rooms-waiting', gameInfo.id);
 
@@ -189,6 +194,20 @@ module.exports = (io) => {
                     });
                     if(gameInfo.users.length <= 1){
                         io.to(socket._gameId).emit('finish', {'status':'exception'});
+                        redis.lrange('rooms-waiting',0, -1, (error, waitingGamesList) => {
+                            if(!error){
+                                waitingGamesList.some((v, i) => {
+                                    if (v===socket._gameId) waitingGamesList.splice(i,1);
+                                });
+                                if(waitingGamesList == null || waitingGamesList == ""){
+                                    console.log("[Redis] Delete store 'rooms-waiting'");
+                                    redis.del('rooms-waiting');
+                                }else{
+                                    console.log("[Redis] Update waiting list.");
+                                    redis.rpush('rooms-waiting', waitingGamesList);
+                                }
+                            }
+                        });
                         redis.del(socket._gameId);
                     }else{
                         redisJsonSet(socket._gameId, gameInfo);
