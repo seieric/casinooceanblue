@@ -48,6 +48,9 @@ module.exports = (io) => {
             if(row === null || row === ""){
                 return next(new Error('authentication error'));
             }else{
+                if(row.name === undefined){
+                    return next(new Error('authentication error'));
+                }
                 redis.exists("client-" + socket.id, (error, res) => {
                     // ユーザー情報が存在しなかった場合
                     if(parseInt(res) !== 1){
