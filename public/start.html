@@ -45,7 +45,10 @@
           </form>
         </div>
     <script>
-        $("input[name=playername]").val(unescape(localStorage.getItem('playerName')));
+        let name = localStorage.getItem('playerName');
+        if(name !== null){
+            $("input[name=playername]").val(unescape(name));
+        }
         $("#playBtn").click((e) => {
             let playerName = $("input[name=playername]").val();
             if(playerName != null && playerName !== ""){
