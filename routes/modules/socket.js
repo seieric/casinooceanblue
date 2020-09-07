@@ -10,6 +10,8 @@ module.exports = (io) => {
         password: process.env.REDIS_PASSWORD
     };
     const redis = require("redis").createClient(redisConfig);
+    const ioRedis = require("socket.io-redis");
+    io.adapter(ioRedis(redisConfig));
 
     /**
      * redisからJSONオブジェクトを取り出す
@@ -45,30 +47,16 @@ module.exports = (io) => {
     io.use( (socket, next) => {
         let token = socket.handshake.query.token;
         let isAuthenticated = false;
-
         db.get("SELECT * FROM users WHERE token=?", [token], (error, row) => {
             if(error){
                 return next(new Error("[SQLite]Something went wrong."));
             }
-
             if(row != null && row !== ""){
-                redis.exists("client-" + socket.id, (error, res) => {
-                    // ユーザー情報が存在しなかった場合
-                    if(parseInt(res) !== 1){
-                        // ユーザーデータを初期化
-                        let userInfo = {
-                            gameId: "",
-                            name: row.name,
-                            score: 0
-                        };
-                        // redisにユーザー情報を登録
-                        redisJsonSet("client-" + socket.id, userInfo);
-                        console.log(`[Socket.io]Client(${socket.id}) is registered to redis.`);
-                    }
-                });
+                socket._name = row.name;
+                socket._gameId = "";
+                socket._score = 0;
                 isAuthenticated = true;
             }
-
             if(!isAuthenticated){
                 return next(new Error('[Socket.io]Authentication error.'));
             }
@@ -77,109 +65,111 @@ module.exports = (io) => {
     });
 
     // Socket.io ルーティング
-    io.sockets.on('connection', (socket) => {
+    io.sockets.on('connection', socket => {
         console.log(`[Socket.io]Client(${socket.id}) connected!`);
 
-        // 開始通知用のフラグ
-        let isStart = false;
-        // ルーム参加フラグ
-        let isJoined = false;
-        redisJsonGet("client-" + socket.id, (error, userInfo) => {
+        let isStarted, isJoined, isError;
+        isStarted = isJoined = isError = false;
+
+        redis.exists('rooms-waiting', (error, res) => {
             if(error){
-                console.error(`[Redis] Failed to get user data. > ${error}`);
-            }else{
-                // 入室待ちのルームを検索
-                 redis.exists('rooms-waiting', (error, res) => {
-                    if(parseInt(res) === 1){
-                        // データが存在した場合
-                        let waitingGamesList = null;
-                        redis.lrange("rooms-waiting", 0, -1, (error, res) => {
-                            waitingGamesList = res;
-                        });
+                console.error(`[Redis]ERROR ${error}`);
+                socket.disconnect();
+                isError = true;
+            }else if(parseInt(res) === 1){
+                // データが存在した場合
+                redis.lrange("rooms-waiting", 0, -1, (error, waitingGamesList) => {
+                    if(error){
+                        console.error(`[Redis]ERROR ${error}`);
+                        socket.disconnect();
+                        isError = true;
+                    }else{
                         // 待ち列が空でないことの確認
-                        if(waitingGamesList !== null && waitingGamesList[0] !== null){
+                        if(waitingGamesList != null && waitingGamesList[0] != null){
                             let waitingGameId = waitingGamesList[0];
                             redisJsonGet(waitingGameId, (error, gameInfo) => {
                                 if(error){
-                                    console.error(`[Redis] Failed to get game data. > ${error}`);
+                                    console.error(`[Redis]ERROR ${error}`);
+                                    socket.disconnect();
+                                    isError = true;
                                 }else{
                                     let numOfUsers = gameInfo.users.length;
-                                    userInfo.gameId = waitingGameId;
+                                    socket._gameId = waitingGameId;
                                     gameInfo.users.push(socket.id);
                                     redisJsonSet(waitingGameId, gameInfo);
                                     // 2人未満の場合待ち状態を維持・3人以上揃ったらゲーム開始
                                     if(2 <= numOfUsers){
                                         // 3人以上揃ったので待ち列から削除
                                         redis.rpush('rooms-waiting', waitingGamesList.shift());
-                                        isStart = true;
+                                        isStarted = true;
                                     }
                                     // ユーザーはルームに参加済
                                     isJoined = true;
                                 }
                             });
                         }
-                    }else{
-                        // データが存在しない場合
+                    }
+                });
+            }else{
+                console.log(`[Redis]Couldn't read the store "rooms-waiting."`);
+            }
+
+            // ルームにまだ参加していな場合はゲームを作成
+            if(!isJoined && !isError){
+                // ルーム情報を初期化
+                let gameInfo = {
+                    id: require('crypto').randomBytes(12).toString('hex'),
+                    users: [],
+                    cards: [],
+                    next: "",
+                    token: require('crypto').randomBytes(6).toString('hex')
+                };
+                console.log("CHK", gameInfo);
+                // ルームを新規作成して登録
+                socket._gameId = gameInfo.id;
+                gameInfo.users.push(socket.id);
+                // トランプも初期化する
+                for(let i=0;i<10;i++){
+                    gameInfo.cards[i] = gameInfo.cards[i+10] = i;
+                }
+                let tmp, n;
+                for(let i=0;i<20;i++){
+                    n = Math.floor(Math.random() * 20);
+                    tmp = gameInfo.cards[n];
+                    gameInfo.cards[n] = gameInfo.cards[i];
+                    gameInfo.cards[i] = tmp;
+                }
+                redisJsonSet(gameInfo.id, gameInfo);
+                // ゲームを待ち列に登録
+                redis.rpush('rooms-waiting', gameInfo.id);
+                isJoined = true;
+            }
+            if(isJoined && !isError){
+                // クライアントをルームに参加させる
+                socket.join(socket._gameId);
+            }
+
+            // 開始フラグが立っていれば他の参加者に通知
+            if(isStarted && !isError){
+                io.to(socket._gameId).emit("start", "Game started.");
+                redisJsonGet(socket._gameId, (error, gameInfo) => {
+                    if(error){
                         console.log(`[Redis]Couldn't read the store "rooms-waiting."`);
+                        socket.disconnect();
+                        isError = true;
                     }
-
-                    // ルームにまだ参加していな場合はゲームを作成
-                    if(!isJoined){
-                        // ルーム情報を初期化
-                        let gameInfo = {};
-                        gameInfo.id = "";
-                        gameInfo.users = [];
-                        gameInfo.cards = [];
-                        gameInfo.next = "";
-                        gameInfo.token = require('crypto').randomBytes(6).toString('hex');
-                        // ルームを新規作成して登録
-                        let gameId = require('crypto').randomBytes(12).toString('hex');
-                        userInfo.gameId = gameId;
-                        gameInfo.id = gameId;
-                        gameInfo.users.push(socket.id);
-                        // トランプも初期化する
-                        for(let i=0;i<10;i++){
-                            gameInfo.cards[i] = gameInfo.cards[i+10] = i;
+                    let startPos = gameInfo.users[0];
+                    // 先頭の人が存在するか確認
+                    redis.exists("client-" + startPos, (error, res) => {
+                        if(error){
+                            console.log(`[Redis]Couldn't read the store "rooms-waiting."`);
+                            socket.disconnect();
+                            isError = true;
                         }
-                        let tmp, n;
-                        for(let i=0;i<20;i++){
-                            n = Math.floor(Math.random() * 20);
-                            tmp = gameInfo.cards[n];
-                            gameInfo.cards[n] = gameInfo.cards[i];
-                            gameInfo.cards[i] = tmp;
+                        if(parseInt(res) === 1){
+                            io.to(startPos).emit("turn", {"token":gameInfo.token});
                         }
-                        redisJsonSet(gameId, gameInfo);
-                        // ゲームを待ち列に登録
-                        redis.rpush('rooms-waiting', gameId);
-                    }
-
-                     // クライアントをルームに参加させ、ユーザー情報を登録
-                     socket.join(userInfo.gameId);
-                     redisJsonSet("client-" + socket.id, userInfo);
-                     // 開始フラグが立っていれば他の参加者に通知
-                     if(isStart){
-                         io.to(userInfo.gameId).emit("start", "Game started.");
-                         redisJsonGet(userInfo.gameId, (error, gameInfo) => {
-                             let tried = 0;
-                             // 3回試行してもいなければ強制終了
-                             while(tried < 3){
-                                 let startPos = gameInfo.users[0];
-                                 // 先頭の人が存在するか確認
-                                 redis.exists("client-" + startPos, (error, res) => {
-                                     if(parseInt(res) === 1){
-                                         io.to(startPos).emit("turn", {"token":gameInfo.token});
-                                         io.to(userInfo.gameId).emit("wait", {});
-                                         tried = 3;
-                                     }
-                                 });
-                                 tried++;
-                             }
-                             // 試行失敗時の処理
-                             if(tried >= 3){
-                                 io.to(userInfo.gameId).emit("finish", {"status":"exception"});
-                             }
-                         });
-                     }
+                    });
                 });
             }
         });
@@ -213,21 +203,18 @@ module.exports = (io) => {
         // 切断時の処理
         socket.on('disconnect', () => {
             console.log(`[Socket.io]Client(${socket.id}) disconnected.`);
-            // ユーザーをゲームから削除
-            redisJsonGet("client-" + socket.id, (error, userInfo) => {
+            
+            // ユーザーをゲーム情報から削除
+            redisJsonGet(socket._gameId, (error, gameInfo) => {
                 if(error){
-                    console.error("[Redis] Failed to get user data. > " + error);
-                }else{
-                    redisJsonGet(userInfo.gameId, (error, gameInfo) => {
-                        gameInfo.users.some((v, i) => {
-                            if (v===socket.id) gameInfo.users.splice(i,1);
-                        });
-                        redisJsonSet(userInfo.gameId, gameInfo);
+                    console.log("[Redis]" + error, "Unable to access game data.");
+                }else if(gameInfo != null){
+                    gameInfo.users.some((v, i) => {
+                        if (v===socket.id) gameInfo.users.splice(i,1);
                     });
+                    redisJsonSet(socket._gameId, gameInfo);
                 }
             });
-            // 最後にデータも削除する
-            redis.del("client-" + socket.id);
         });
 
         // 例外処理
