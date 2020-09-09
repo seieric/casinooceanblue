@@ -1,11 +1,18 @@
 //カードを表示
-for (var i = 0; i < 20; i++){
-    $("#gameField").append('<li class="card"><img class="card-image" src="images/card.jpg"></li>');
+for (let i = 0; i < 20; i++){
+    $("#gameField").append('<li class="card"><img src="images/card.jpg"></li>');
 }
-//自分の番判定用フラグ
-let isTurn = false;
-//選択されたカード情報
-let cards = {first: "", second: ""};
+let cards = [];
+for(let i=0;i<10;i++){
+    cards[i] = cards[i+10] = i;
+}
+let tmp, n;
+for(let i=0;i<20;i++){
+    n = Math.floor(Math.random() * 20);
+    tmp = cards[n];
+    cards[n] = cards[i];
+    cards[i] = tmp;
+}
 //セッションからトークンとプレイヤー名を取得
 let playerName = localStorage.getItem('playerName');
 let authToken = localStorage.getItem('authToken');
@@ -21,43 +28,14 @@ const socket = io({
 socket.on("connect", () => {
     console.log("Connected to game server.");
 });
-socket.on("start", (data) => {
-    console.log("Game has benn started.");
-    $("messageBox").innerText("ゲームが始まりました。");
-})
-socket.on("turn", (data) => {
-   console.log("Now your turn.");
-   console.log("Authentication: token is", data.token);
-   $("#turnDisplay").innerText("あなたの番です。");
-   isTurn = true;
-   setInterval(() => {
-       isTurn = false;
-       io.emit("cardOpen", cards);
-   }, 100000);
-});
-socket.on('finish', (data) => {
-    if(data.status === "exception"){
-        console.log("Game finished with exception. Sorry.");
-        let result = {
-            status: "exception"
-        };
-        localStorage.setItem(result);
-    }else{
-        console.log("Game finished.");
-        let result = {
-            status: "success",
-            score: data.score || null,
-            ranking: data.ranking || null
-        };
-        localStorage.setItem(result);
+socket.on('finish', )
+let numOfSelected = 0;
+$('li.card').on('click', function(){
+    let index = $('li.card').index(this);
+    let n = cards[index] + 1;
+    if(numOfSelected < 2){
+        $(this).html(`<img src=images/card${n}.jpg>`);
     }
-    location.replace("result.html");
-});
-$("#gameField li").on('click',() => {
-    let index = $("#gameField li").index(this);
-    console.log("Index is " + index);
-});
-$("div").on('click', () => {
-   let index = $("div ").index(this);
-   console.log(index);
+    console.log(index + 'th item clicked!');
+    numOfSelected++;
 });
