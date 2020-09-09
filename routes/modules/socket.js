@@ -156,26 +156,50 @@ module.exports = (io) => {
 
         // トリガー別の処理
         // カードの照合
-        socket.on('cardOpen', (req) => {
-            redis.get("client-" + socket.id, (error, userInfo) => {
+        socket.on('cardOpne', (data) => {
+            let gameId = socket.gameId;
+            redisJsonGet(gameId, (error, cache) => {
                 if(error){
-                    console.log("[Redis]" + error, "Request name was 'cardOpen'");
-                } else if (userInfo.gameId != null){
-                    console.log(`[Socket.io]Client(${socket.id}) tried join the game again. Invalid request.`);
-                } else {
-                    redis.get(userInfo.gameId, (error, gameInfo) => {
-                        if (!error) {
-                            let res = {};
-                            res.first = gameInfo.cards[req.first];
-                            res.second = gameInfo.cards[req.second];
-                            if (res.first === res.second && res.first != null) {
-                                gameInfo.cards[req.first] = gameInfo.cards[req.second] = null;
+                    console.log("[Redis] Unable to read game data.");
+                    io.to(gameId).emit('finish', {'status':'exception'});
+                }else{
+                    let cards = data.cards;
+                    let answers = cache.cards;
+                    let isHit = false;
+                    if(res != null){
+                        for(let i=0;i<cards.length;i++){
+                            if(cards[i] === answers[i]){
+                                isHit = true;
                             }
-                            io.to(userInfo.gameId).emit("cardNotify", res);
-                        } else {
-                            console.log("[Redis]" + error, "Unable to access game data.");
                         }
-                    });
+                    }
+
+                    let cardRes;
+                    if(isHit){
+                        cardRes = {
+                            status: "success",
+                            cardsInfo: []
+                        }
+                    }else{
+                        cardsRes = {
+                            status : "fail",
+                            cardsInfo: []
+                        }
+                    }
+                    // 一人以下しかいない場合は他のユーザーが退出済みなので処理しない
+                    if(cache.users.length >= 1){
+                        let token = require('crypto').randomBytes(48).toString('hex');
+                        cache.token = token;
+                        if(cache.next != null){
+                            io.to(cache.next).emit('turn', {token});
+                        }else{
+                            cache.next = cache.users[1];
+                        }
+                        io.to(cache.next)
+                    }else{
+
+                    }
+                    io.to(gameId).emit('cardNotify', cardRes);
                 }
             });
         });
