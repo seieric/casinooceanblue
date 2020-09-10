@@ -3,11 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>ゲーム結果</title>
+    <title>ゲーム結果 | Casino Oceanblue</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Aclonica">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.2.0/aos.css">
+    <link rel="stylesheet" href="style.css">
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -29,61 +30,16 @@
                         <h1 class="text-center" style="color: rgb(0, 32,255);font-size: 86px;font-family: Aclonica, sans-serif;">YOUR SCORE</h1>
                     </div>
                     <div class="text">
-                        <p class="text-center text-light bg-primary border rounded-circle shadow tada animated" style="font-size: 136px;">120</p>
-                        <p style="height: 70px;font-size: 50px;">あなたの順位は…</p>
-                        <p class="text-center text-light bg-primary border rounded-circle shadow" data-aos="flip-up" data-aos-once="true" style="font-size: 136px;">No.1</p>
-                        <h2 style="font-size: 45px;">ランキング</h2>
-                    </div><table id="example" class="table table-striped table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
- <th>Score</th>
-<th>Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>100</td>
-                <td>System Architect</td>
-            </tr>
-            <tr>
-                <td>100</td>
-                <td>Accountant</td>
-            </tr>
-            <tr>
-                <td>100</td>
-                <td>Junior Technical Author</td>
-            </tr>
-            <tr>
-                <td>100</td>
-                <td>Senior Javascript Developer</td>
-                </tr>
-            <tr>
-                <td>100</td>
-                <td>Accountant</td>
-                </tr>
-            <tr>
-                <td>100</td>
-                <td>Integration Specialist</td>
-               </tr>
-            <tr>
-                <td>100</td>
-                <td>Sales Assistant</td>
-                </tr>
-            <tr>
-                <td>100</td>
-                <td>Integration Specialist</td>
-               </tr>
-            <tr>
-                <td>100</td>
-                <td>Javascript Developer</td>
-                </tr>
-            <tr>
-                <td>100</td>
-                <td>Software Engineer</td>
-                </tr>
-            <tr>
-        </tbody>
-    </table></div>
+                        <p class="text-center text-light bg-primary border rounded-circle shadow tada animated" style="font-size: 136px;" id="score">No data...</p>
+                        <p style="height: 70px;font-size: 50px;">あなたは…</p>
+                        <p class="text-center text-light bg-primary border rounded-circle shadow" data-aos="flip-up" data-aos-once="true" style="font-size: 136px;" id="rank">No data...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-10">
+                    <a href="/" class="btn btn-danger btn-lg">トップに戻る</a>
+                </div>
             </div>
         </div>
     </div>
@@ -92,8 +48,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.2.0/aos.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
-AOS.init({ disable: 'mobile' });
-});
+        AOS.init({ disable: 'mobile' });
+    });
+    let result = sessionStorage.getItem('result');
+    $("#rank").text(result.rank + "位");
+    $("#score").text(result.score);
     </script>
 </body>
 </html>
