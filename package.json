@@ -1,5 +1,5 @@
 {
-  "name": "toinfes-game",
+  "name": "oceanblue",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -19,6 +19,7 @@
     "body-parser": "~1.19.0",
     "request": "~2.88.2",
     "date-utils": "~1.2.21",
-    "socket.io-redis": "~5.4.0"
+    "socket.io-redis": "~5.4.0",
+    "pg": "~8.3.3"
   }
 }
