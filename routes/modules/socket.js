@@ -105,11 +105,14 @@ module.exports = (io) => {
                                 }else{
                                     redis.del('rooms-waiting');
                                 }
+                                // ゲーム開始のシグナルを送る
                                 io.to(socket._gameId).emit('start', {'n':numOfUsers + 1});
+                                console.debug("Game started.");
                             }
                             // ユーザーはルームに参加済
                             socket.join(socket._gameId);
                             console.log(`Client(${socket.id}) joined the game ${socket._gameId}`);
+                            console.debug(numOfUsers + "in the game");
                         }
                     });
                 }else{
@@ -156,50 +159,48 @@ module.exports = (io) => {
 
         // トリガー別の処理
         // カードの照合
-        socket.on('cardOpne', (data) => {
-            let gameId = socket.gameId;
+        socket.on('cardOpen', (data) => {
+            console.debug("Receive card opening.");
+            let gameId = socket._gameId;
             redisJsonGet(gameId, (error, cache) => {
-                if(error){
+                if(!error){
+                    // トークンを照合
+                    if(data.token === cache.token){
+                        console.debug("Authorized.");
+                        let res;
+                        if(cache.cardTmp != null){
+                            let firstCard = cache.cards[cache.cardTmp];
+                            let secondCard = cache.cards[data.cardPos];
+                            // 2つのカードが一致するかどうか
+                            if(firstCard === secondCard){
+                                // カード情報を削除
+                                cache.cards[cache.cardTmp] = cache.cards[cache.cardTmp] = null;
+                                io.to(socket.id).emit('turn', {token: cache.token});
+                            }
+                            res = {
+                                cards: [data.cardPos, cache.cards[data.cardPos]]
+                            };
+                        }else{
+                            cache.cardTmp = data.cardPos;
+                            res = {
+                                cards: [data.cardPos, cache.cards[data.cardPos]]
+                            };
+                        }
+                        let isFinished = true;
+                        cache.cards.some((v,i) => {
+                            if(v !== null){
+                                isFinished = false;
+                            }
+                        });
+                        if(isFinished){
+                            io.to(gameId).emit('finish', {status: "success", rank: 100, score: 1000});
+                        }else{
+                            io.to(gameId).emit('turn', res);
+                        }
+                    }
+                }else{
                     console.log("[Redis] Unable to read game data.");
                     io.to(gameId).emit('finish', {'status':'exception'});
-                }else{
-                    let cards = data.cards;
-                    let answers = cache.cards;
-                    let isHit = false;
-                    if(res != null){
-                        for(let i=0;i<cards.length;i++){
-                            if(cards[i] === answers[i]){
-                                isHit = true;
-                            }
-                        }
-                    }
-
-                    let cardRes;
-                    if(isHit){
-                        cardRes = {
-                            status: "success",
-                            cardsInfo: []
-                        }
-                    }else{
-                        cardsRes = {
-                            status : "fail",
-                            cardsInfo: []
-                        }
-                    }
-                    // 一人以下しかいない場合は他のユーザーが退出済みなので処理しない
-                    if(cache.users.length >= 1){
-                        let token = require('crypto').randomBytes(48).toString('hex');
-                        cache.token = token;
-                        if(cache.next != null){
-                            io.to(cache.next).emit('turn', {token});
-                        }else{
-                            cache.next = cache.users[1];
-                        }
-                        io.to(cache.next)
-                    }else{
-
-                    }
-                    io.to(gameId).emit('cardNotify', cardRes);
                 }
             });
         });
