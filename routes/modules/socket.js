@@ -94,6 +94,8 @@ module.exports = (io) => {
                             socket._gameId = waitingGameId;
                             gameInfo.users.push(socket.id);
                             redisJsonSet(waitingGameId, gameInfo);
+                            // ユーザーはルームに参加済
+                            socket.join(socket._gameId);
                             // 2人未満の場合待ち状態を維持・3人以上揃ったらゲーム開始
                             if(2 <= numOfUsers){
                                 console.debug(`[DEBUG] ${gameInfo.id} has been started now.`);
@@ -109,8 +111,6 @@ module.exports = (io) => {
                                 io.to(socket._gameId).emit('start', {'n':numOfUsers + 1});
                                 console.debug("Game started.");
                             }
-                            // ユーザーはルームに参加済
-                            socket.join(socket._gameId);
                             console.log(`Client(${socket.id}) joined the game ${socket._gameId}`);
                             console.debug(numOfUsers + "in the game");
                         }
