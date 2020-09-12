@@ -20,7 +20,8 @@ socket.on("connect", () => {
 let isStarted = false;
 let n = 0;
 $('li.card').on('click', function(){
-    if(isStarted){
+    let token = sessionStorage.getItem('cardToken');
+    if(isStarted && token != null){
         let index = $('li.card').index(this);
         if(n === 0){
             $(this).attr('id', 'firstSelected');
@@ -29,7 +30,7 @@ $('li.card').on('click', function(){
         }
         if(n <= 1){
             let data = {
-                token: authToken,
+                token: token,
                 cardPos: index
             }
             socket.emit('cardOpen', data);
@@ -51,7 +52,7 @@ socket.on('turn', (data) => {
    setTimeout(() => {
        sessionStorage.removeItem('cardToken');
        console.log("時間切れです。");
-   }, 10000)
+   }, 10000);
 });
 socket.on('start', (data) => {
    console.log("Game started.");

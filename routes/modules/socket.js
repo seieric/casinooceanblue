@@ -109,6 +109,7 @@ module.exports = (io) => {
                                 }
                                 // ゲーム開始のシグナルを送る
                                 io.to(socket._gameId).emit('start', {'n':numOfUsers + 1});
+                                io.to(gameInfo.users[0]).emit('turn', {token:gameInfo.token});
                                 console.debug("Game started.");
                             }
                             console.log(`Client(${socket.id}) joined the game ${socket._gameId}`);
@@ -161,6 +162,7 @@ module.exports = (io) => {
         // カードの照合
         socket.on('cardOpen', (data) => {
             console.debug("Receive card opening.");
+            console.log(JSON.stringify(data));
             let gameId = socket._gameId;
             redisJsonGet(gameId, (error, cache) => {
                 if(!error){
