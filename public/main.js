@@ -44,8 +44,7 @@ $('li.card').on('click', function(){
 // カードの中身が送られてきたとき
 socket.on('cardRes', (data) => {
     console.log("RECEIVE RES");
-    $('#firstSelected').html(`<img src="images/card${data.cards[0]}.jpg">`);
-    $('#secondSelected').html(`<img src="images/card${data.cards[1]}.jpg">`);
+    $('li.card').eq(data.cards[0]).html(`<img src="images/card${data.cards[1]}.jpg">`);
 });
 // 自分の番が回ってきたとき
 socket.on('turn', (data) => {
@@ -74,8 +73,13 @@ socket.on('start', (data) => {
    console.log("Game started.");
    console.log(`${data.n} people in the game.`);
    isStarted = true;
+   // 5秒おきにトークン取得権を確認
+   setInterval(() => {
+       socket.emit('tokenPolling');
+   }, 5000);
 });
 socket.on('finish', (data) => {
+    console.log("Finished!")
     let result;
     if(data.status === 'exception'){
         result = {
@@ -89,4 +93,5 @@ socket.on('finish', (data) => {
         }
     }
     sessionStorage.setItem('result', JSON.stringify(result));
+    location.replace("result.html");
 });

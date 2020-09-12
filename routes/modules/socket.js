@@ -175,6 +175,7 @@ module.exports = (io) => {
                             let secondCard = cache.cards[data.cardPos];
                             // 2つのカードが一致するかどうか
                             if(firstCard === secondCard){
+                                socket._score += 100;
                                 // カード情報を削除
                                 cache.cards[cache.cardTmp] = cache.cards[cache.cardTmp] = null;
                                 io.to(socket.id).emit('turn', {token: cache.token});
@@ -195,9 +196,9 @@ module.exports = (io) => {
                             }
                         });
                         if(isFinished){
-                            io.to(gameId).emit('finish', {status: "success", rank: 100, score: 1000});
+                            io.to(gameId).emit('finish', {status: "success", rank: 100, score: socket._score});
                         }else{
-                            io.to(gameId).emit('turn', res);
+                            io.to(gameId).emit('cardRes', res);
                         }
                     }
                 }else{
