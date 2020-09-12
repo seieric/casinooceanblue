@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
     <style>
+        body{
+            background: #0000ff;
+        }
         .gm-ctrl{
             background: linear-gradient(90deg, #0000ff, #00ff80);
             z-index: 0;
@@ -30,24 +33,96 @@
             border-radius: 10px;
             max-width: 125px;
         }
+        .loader {
+            font-size: 10px;
+            margin: 50px auto;
+            text-indent: -9999em;
+            width: 11em;
+            height: 11em;
+            border-radius: 50%;
+            background: #f0f8ff;
+            background: -moz-linear-gradient(left, #f0f8ff 10%, rgba(240,248,255, 0) 42%);
+            background: -webkit-linear-gradient(left, #f0f8ff 10%, rgba(240,248,255, 0) 42%);
+            background: -o-linear-gradient(left, #f0f8ff 10%, rgba(240,248,255, 0) 42%);
+            background: -ms-linear-gradient(left, #f0f8ff 10%, rgba(240,248,255, 0) 42%);
+            background: linear-gradient(to right, #f0f8ff 10%, rgba(240,248,255, 0) 42%);
+            position: relative;
+            -webkit-animation: load3 1.4s infinite linear;
+            animation: load3 1.4s infinite linear;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+        }
+        .loader:before {
+            width: 50%;
+            height: 50%;
+            background: #f0f8ff;
+            border-radius: 100% 0 0 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            content: '';
+        }
+        .loader:after {
+            background: #0000ff;
+            width: 75%;
+            height: 75%;
+            border-radius: 50%;
+            content: '';
+            margin: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+        @-webkit-keyframes load3 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes load3 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        #loaderMsg{
+            color: #fff;
+        }
     </style>
 </head>
 <body>
-<div class="d-flex w-100 h-100 p-3 mx-auto flex-column text-center">
-    <ul id="gameField"></ul>
+<div id="loaderWrap">
+    <div class="loader"></div>
+    <p class="text-center" id="loaderMsg">他のプレイヤーの参加を待っています...</p>
 </div>
-<nav class="navbar fixed-bottom navbar-expand-sm gm-ctrl">
-    <span class="navbar-brand gm-brand">Casino Oceanblue</span>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarCollapse">
-        <ul class="navbar-nav mr-auto">
-            <li class="text-white" id="turnDisplay"></li>
-            <li class="text-white" id="massageBox"></li>
-        </ul>
+<div id="game" style="visibility: hidden">
+    <div class="d-flex w-100 h-100 p-3 mx-auto flex-column text-center">
+        <ul id="gameField"></ul>
     </div>
-</nav>
+    <nav class="navbar fixed-bottom navbar-expand-sm gm-ctrl">
+        <span class="navbar-brand gm-brand">Casino Oceanblue</span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="text-white" id="turnDisplay"></li>
+                <li class="text-white" id="massageBox"></li>
+            </ul>
+        </div>
+    </nav>
+</div>
 <script src="socket.io/socket.io.js"></script>
 <script src="main.js"></script>
 </body>

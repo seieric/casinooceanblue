@@ -8,13 +8,15 @@ let authToken = localStorage.getItem('authToken');
 if(playerName == null || playerName === "" || authToken == null || authToken === ""){
     window.location.href="start.html";
 }
-console.log("Credentials have been loaded.");
+$("#loaderMsg").text("サーバーに接続しています...");
 const socket = io({
+    transports: ['websocket'],
     query: {
         token: authToken
     }
 });
 socket.on("connect", () => {
+    $("#loaderMsg").text("他のプレイヤーの参加を待っています...時間がかかることがあります。");
     console.log("Connected to game server.");
 });
 let isStarted = false;
@@ -55,6 +57,10 @@ socket.on('turn', (data) => {
    }, 10000);
 });
 socket.on('start', (data) => {
+    $("#loaderMsg").text("ゲームが開始されました...");
+    $("#loaderWrap").css('visibility', 'hidden');
+    $("body").css('background', '#fff');
+    $("#game").css('visibility', 'visible');
    console.log("Game started.");
    console.log(`${data.n} people in the game.`);
    isStarted = true;
