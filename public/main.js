@@ -49,16 +49,26 @@ socket.on('cardRes', (data) => {
 });
 // 自分の番が回ってきたとき
 socket.on('turn', (data) => {
-   console.log("Now, your turn.");
-   sessionStorage.setItem('cardToken', data.token);
-   setTimeout(() => {
-       sessionStorage.removeItem('cardToken');
-       console.log("時間切れです。");
-   }, 10000);
+   $("#turnDisplay").text("あなたの番です。");
+    sessionStorage.setItem('cardToken', data.token);
+    const sec = 10;
+    let dt = new Date();
+    const endDt = new Date(dt.getTime() + sec * 1000);
+    let cnt = sec;
+    const id = setInterval(function(){
+        cnt--;
+        $("#counter").text(`制限時間${cnt}秒`);
+        dt = new Date();
+        if(dt.getTime() >= endDt.getTime()){
+            clearInterval(id);
+            sessionStorage.removeItem('cardToken');
+            $("#turnDisplay").text("時間切れです！")
+        }
+    }, 1000);
 });
 socket.on('start', (data) => {
     $("#loaderMsg").text("ゲームが開始されました...");
-    $("#loaderWrap").css('visibility', 'hidden');
+    $("#loaderWrap").remove();
     $("body").css('background', '#fff');
     $("#game").css('visibility', 'visible');
    console.log("Game started.");
