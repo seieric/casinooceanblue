@@ -17,6 +17,11 @@ var port = normalizePort('3000');
 app.set('port', port);
 
 /**
+ * File Utils
+ */
+const fs = require('fs');
+
+/**
  * Create HTTP server.
  */
 
@@ -94,4 +99,8 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  if (process.env.DYNO) {
+    console.log('This is on Heroku..!!');
+    fs.openSync('/tmp/app-initialized', 'w');
+  }
 }
