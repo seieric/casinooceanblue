@@ -7,8 +7,6 @@ const logger = require('morgan');
 require('dotenv').config();
 //リクエストボディのパーサー
 const bodyParser = require('body-parser');
-// force SSL in production
-const forceSsl = require('force-ssl-heroku');
 
 const apiRouter = require('./routes/api');
 
