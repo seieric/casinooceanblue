@@ -39,9 +39,8 @@ module.exports = (io) => {
         io.to(socket.id).emit('finish', {status:'exception'});
     }
 
-    // SQLiteクライアントの初期化
-    const sqlite = require("sqlite3").verbose();
-    const db = new sqlite.Database("./db/development.sqlite");
+    // PostgreSQLクライアントの初期化
+    const db = require('../modules/database');
 
     // クライアントの生存確認
     io.set('heartbeat interval', 5000);
@@ -51,15 +50,19 @@ module.exports = (io) => {
     redis.del('rooms-waiting');
 
     // クライアントの認証
-    io.use( (socket, next) => {
-        let token = socket.handshake.query.token;
+    io.use( async (socket, next) => {
+        const token = socket.handshake.query.token;
         let isAuthenticated = false;
-        db.get("SELECT * FROM users WHERE token=?", [token], (error, row) => {
-            if(error){
+        const query = {
+            text: "SELECT * FROM users WHERE token=$1",
+            values: [token]
+        };
+        await db.query(query, (err, result) => {
+            if(err){
                 return next(new Error("[SQLite]Something went wrong."));
             }
-            if(row != null && row !== ""){
-                socket._name = row.name;
+            if(result.rowCount === 1){
+                socket._name = result.rows[0].name;
                 socket._gameId = "";
                 socket._score = 0;
                 isAuthenticated = true;
