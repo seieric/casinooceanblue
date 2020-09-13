@@ -5,9 +5,7 @@
 module.exports = (io) => {
     // Redisクライアントの初期化
     const redisConfig ={
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT,
-        password: process.env.REDIS_PASSWORD
+        url: process.env.REDISCLOUD_URL,
     };
     const redis = require("redis").createClient(redisConfig);
     const ioRedis = require("socket.io-redis");
