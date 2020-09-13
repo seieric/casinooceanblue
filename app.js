@@ -7,6 +7,8 @@ const logger = require('morgan');
 require('dotenv').config();
 //リクエストボディのパーサー
 const bodyParser = require('body-parser');
+// force SSL in production
+const forceSsl = require('force-ssl-heroku');
 
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
@@ -24,6 +26,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
+app.use(forceSsl);
 
 app.use('/', indexRouter);
 app.use('/api/', apiRouter);
