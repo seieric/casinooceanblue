@@ -4,5 +4,5 @@ const router = express.Router();
 module.exports = router;
 
 router.get('/', (req,res) => {
-    res.sendFile(__dirname + '/public/default.html');
+    res.sendFile(path.join);
 });
