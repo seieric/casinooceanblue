@@ -25,7 +25,17 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use(forceSsl);
+app.use(function (req, res, next) {
+  let sslUrl;
+  if (process.env.NODE_ENV === 'production' &&
+      req.headers['x-forwarded-proto'] !== 'https' && req.hostname !== 'oceanblue.toinfes.jp') {
+
+    sslUrl = ['https://', req.hostname, req.url].join('');
+    return res.redirect(sslUrl);
+  }
+
+  return next();
+});
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
