@@ -18,6 +18,13 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// http headers
+app.use(function (req, res, next) {
+  res.removeHeader('X-Powered-By');
+  res.header('Cache-Control', ['public', 'max-age=86400'].join(','));
+  next();
+});
+
 app.use(forceSsl);
 app.use(logger('dev'));
 app.use(express.json());
