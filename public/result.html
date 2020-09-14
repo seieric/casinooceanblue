@@ -51,8 +51,15 @@
         AOS.init({ disable: 'mobile' });
     });
     let result = sessionStorage.getItem('result');
-    $("#rank").text(result.rank + "位");
-    $("#score").text(result.score);
+    if(result != null){
+        if(result.rank != null || result.score != null){
+            $("#rank").text(result.rank + "位");
+            $("#score").text(result.score);
+        }else{
+            $("#rank").text("No data...");
+            $("#score").text("No data...");
+        }
+    }
     sessionStorage.removeItem('result');
     </script>
 </body>
