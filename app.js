@@ -7,10 +7,15 @@ const logger = require('morgan');
 require('dotenv').config();
 //リクエストボディのパーサー
 const bodyParser = require('body-parser');
+// compression
+const compression = require('compression');
 
 const apiRouter = require('./routes/api');
 
 const app = express();
+
+// gzip compression
+app.use(compression());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
