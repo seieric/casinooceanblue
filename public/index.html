@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/css/animate.css">
     <script src="assets/js/jquery.lettering.js"></script>
     <script src="assets/js/jquery.textillate.js"></script>
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=default%2CHTMLPictureElement"></script>
     <link rel="stylesheet" href="style.css">
     <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -57,7 +58,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
           </div>
           <div class="col-sm-5 d-flex flex-column align-items-center justify-content-center">
-            <img src="images/lpa.jpg" class="img-fluid rounded w-75 mx-auto lp-img" alt="トランプのイメージ">
+            <picture>
+              <source srcset="images/lpa.webp" type="image/webp" class="img-fluid rounded w-75 mx-auto lp-img">
+              <img src="images/lpa.jpg" alt="トランプのイメージ" class="img-fluid rounded w-75 mx-auto lp-img">
+            </picture>
           </div>
         </div>
       </div>
@@ -84,12 +88,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <a href="ranking.html" class="btn btn-lg intl-btn-play">ランキング！</a>
         </div>
         <div class="col-md-5 intl-animation intl-slide-in-right">
-          <img class="img-fluid rounded mx-auto" style="width: 100%;" src="images/brand.jpg" alt="Casino Oceanblue(カジノオーシャンブルー)のロゴ">
+          <picture>
+            <source srcset="images/brand.webp" type="image/webp" class="img-fluid rounded mx-auto" style="width: 100%;">
+            <img src="images/brand.jpg" alt="Casino Oceanblue(カジノオーシャンブルー)のロゴ" class="img-fluid rounded mx-auto" style="width: 100%;">
+          </picture>
         </div>
       </div>
       <div class="row mt-5 mb-5 intl-animation intl-fade-in">
         <div class="col-md-5">
-          <img class="img-fluid rounded mx-auto" style="width: 100%;" src="images/inside.jpg" alt="カジノオーシャンブルーの船の中">
+          <picture>
+            <source srcset="images/lpb.webp" type="image/webp" class="img-fluid rounded mx-auto" style="width: 100%;">
+            <img src="images/lpb.jpg" alt="Casino Oceanblue(カジノオーシャンブルー)のロゴ" class="img-fluid rounded mx-auto" style="width: 100%;">
+          </picture>
         </div>
         <div class="col-md-7">
           <h2 class="display-4 intl-serif-en">Follow Casino Oceanblue!!</h2>
