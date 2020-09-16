@@ -219,7 +219,7 @@ module.exports = (io) => {
                             if(firstCard === secondCard){
                                 socket._score += 100;
                                 // カード情報を削除
-                                gameInfo.cards[gameInfo.cardTmp] = gameInfo.cards[gameInfo.cardTmp] = null;
+                                gameInfo.cards[gameInfo.cardTmp] = gameInfo.cards[data.cardPos] = null;
                                 // 同じユーザーがもう一度プレイ
                                 io.to(socket.id).emit('turn', {token: gameInfo.token});
                                 console.debug("[DEBUG]Card hit!");

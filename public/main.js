@@ -26,17 +26,27 @@ socket.on('cardRes', (data) => {
     if(data.cards[1] !== null){
         $('li.card').eq(data.cards[0]).html(`<img src="images/card${data.cards[1]}.jpg">`);
         if(previous.value === data.cards[1]){
+            // 1枚目のカードと2枚目が一致したとき
             setTimeout(() => {
                 $('li.card').eq(previous.pos).html(`<img src="images/opend.jpg">`);
                 $('li.card').eq(data.cards[0]).html(`<img src="images/opend.jpg">`);
-                $('li.card').eq(previous.pos).addClass('card-opend');
-                $('li.card').eq(data.cards[0]).addClass('card-opend');
+                $('li.card').eq(previous.pos).addClass('card-finished');
+                $('li.card').eq(data.cards[0]).addClass('card-finished');
             }, 2000);
             // reset
             previous.value = previous.pos = -1;
         }else if(previous.pos === -1){
+            // 1枚目のカードのとき
             previous.pos = data.cards[0];
             previous.value = data.cards[1];
+        }else{
+            // 2枚目のカードのとき（不一致）
+            // カードの向きを変える
+            setTimeout(() => {
+                $('li.card').eq(previous.pos).html(`<img src="images/card.jpg">`);
+                $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
+            }, 1500);
+            previous.value = previous.pos = -1;
         }
     }
 });
