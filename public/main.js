@@ -72,6 +72,9 @@ socket.on('turn', (data) => {
             if(cards.length === 2){
                 $('li.card').off();
                 cards = [];
+                clearInterval(counter);
+                $('#counter').text("");
+                $("#turnDisplay").text("他の人の番になりました。");
             }
         }
     });
