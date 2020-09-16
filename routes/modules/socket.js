@@ -221,9 +221,11 @@ module.exports = (io) => {
                                 gameInfo.cards[gameInfo.cardTmp] = gameInfo.cards[gameInfo.cardTmp] = null;
                                 // 同じユーザーがもう一度プレイ
                                 io.to(socket.id).emit('turn', {token: gameInfo.token});
+                                console.debug("[DEBUG]Card hit!");
                             }else{
                                 // 他のユーザーの版になる
                                 io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
+                                console.debug(`[DEBUG]${gameInfo.users[gameInfo.next]}'s turn.`);
                                 if(gameInfo.next === (gameInfo.users.length - 1)){
                                     gameInfo.next = 0;
                                 }else{
@@ -241,6 +243,7 @@ module.exports = (io) => {
                             res = {
                                 cards: [data.cardPos, gameInfo.cards[data.cardPos]]
                             };
+                            io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
                         }
                         let isFinished = true;
                         gameInfo.cards.some((v,i) => {
@@ -248,6 +251,7 @@ module.exports = (io) => {
                                 isFinished = false;
                             }
                         });
+                        redisJsonSet(gameInfo);
                         if(isFinished){
                             io.to(gameId).emit('finish', {status: "success", rank: 100, score: socket._score});
                         }else{
