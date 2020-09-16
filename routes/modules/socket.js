@@ -5,7 +5,7 @@
 module.exports = (io) => {
     // Redisクライアントの初期化
     const redisConfig ={
-        url: process.env.REDISCLOUD_URL,
+        url: process.env.REDISCLOUD_URL
     };
     const redis = require("redis").createClient(redisConfig);
     const ioRedis = require("socket.io-redis");
@@ -72,6 +72,8 @@ module.exports = (io) => {
         });
     });
 
+    // 2秒毎にトークンの更新を確認
+
     // Socket.io ルーティング
     io.sockets.on('connection', socket => {
         console.log(`[Socket.io]Client(${socket.id}) connected!`);
@@ -111,6 +113,13 @@ module.exports = (io) => {
                                 // ゲーム開始のシグナルを送る
                                 io.to(socket._gameId).emit('start', {'n':numOfUsers + 1});
                                 io.to(gameInfo.users[0]).emit('turn', {token:gameInfo.token});
+                                console.debug(`First user is ${gameInfo.users[0]}`);
+                                // 配列の前から２番めのユーザーが次のプレイヤー
+                                gameInfo.next = 1;
+                                // トークンの制限時間を15秒に設定
+                                const tokenExpire = 15;
+                                gameInfo.tokenExpire = new Date(new Date().getTime() + tokenExpire*1000);
+                                redisJsonSet(gameInfo.id, gameInfo);
                                 console.debug("Game started.");
                             }
                             console.log(`Client(${socket.id}) joined the game ${socket._gameId}`);
@@ -124,8 +133,10 @@ module.exports = (io) => {
                         id: require('crypto').randomBytes(12).toString('hex'),
                         users: [],
                         cards: [],
-                        next: "",
-                        token: require('crypto').randomBytes(6).toString('hex')
+                        next: 0,
+                        token: require('crypto').randomBytes(6).toString('hex'),
+                        tokenExpire: "",
+                        cardTmp: null
                     };
                     // ルームを新規作成して登録
                     socket._gameId = gameInfo.id;
@@ -165,33 +176,46 @@ module.exports = (io) => {
             console.debug("Receive card opening.");
             console.log(JSON.stringify(data));
             let gameId = socket._gameId;
-            redisJsonGet(gameId, (error, cache) => {
+            redisJsonGet(gameId, (error, gameInfo) => {
                 if(!error){
                     // トークンを照合
-                    if(data.token === cache.token){
-                        console.debug("Authorized.");
+                    if(data.token === gameInfo.token){
+                        console.debug("User authorized.");
                         let res;
-                        if(cache.cardTmp != null){
-                            let firstCard = cache.cards[cache.cardTmp];
-                            let secondCard = cache.cards[data.cardPos];
+                        if(gameInfo.cardTmp != null){
+                            console.debug("HAAAA!");
+                            let firstCard = gameInfo.cards[gameInfo.cardTmp];
+                            let secondCard = gameInfo.cards[data.cardPos];
                             // 2つのカードが一致するかどうか
                             if(firstCard === secondCard){
                                 socket._score += 100;
                                 // カード情報を削除
-                                cache.cards[cache.cardTmp] = cache.cards[cache.cardTmp] = null;
-                                io.to(socket.id).emit('turn', {token: cache.token});
+                                gameInfo.cards[gameInfo.cardTmp] = gameInfo.cards[gameInfo.cardTmp] = null;
+                                // 同じユーザーがもう一度プレイ
+                                io.to(socket.id).emit('turn', {token: gameInfo.token});
+                            }else{
+                                // 他のユーザーの版になる
+                                io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
+                                if(gameInfo.next === (gameInfo.users.length - 1)){
+                                    gameInfo.next = 0;
+                                }else{
+                                    gameInfo.next += 1;
+                                }
+                                // 初期化
+                                gameInfo.cardTmp = null;
+                                redisJsonSet(gameInfo.id, gameInfo);
                             }
                             res = {
-                                cards: [data.cardPos, cache.cards[data.cardPos]]
+                                cards: [data.cardPos, gameInfo.cards[data.cardPos]]
                             };
                         }else{
-                            cache.cardTmp = data.cardPos;
+                            gameInfo.cardTmp = data.cardPos;
                             res = {
-                                cards: [data.cardPos, cache.cards[data.cardPos]]
+                                cards: [data.cardPos, gameInfo.cards[data.cardPos]]
                             };
                         }
                         let isFinished = true;
-                        cache.cards.some((v,i) => {
+                        gameInfo.cards.some((v,i) => {
                             if(v !== null){
                                 isFinished = false;
                             }
