@@ -60,14 +60,12 @@ socket.on('turn', (data) => {
         if(token != null){
             const index = $('li.card').index(this);
             cards.push(index);
-            console.log("Clicked::" + index);
             if(cards.length <= 2){
                 let data = {
                     token: token,
                     cardPos: index
                 }
                 socket.emit('cardOpen', data);
-                console.log("SEND REQ");
             }
             if(cards.length === 2){
                 $('li.card').off();
