@@ -73,6 +73,32 @@ module.exports = (io) => {
     });
 
     // 2秒毎にトークンの更新を確認
+    setInterval(() => {
+        const rooms = io.sockets.adapter.rooms;
+        for(let roomId in rooms){
+            if(rooms[roomId].length >= 2){
+                redisJsonGet(roomId, (err, gameInfo) => {
+                    const now = new Date();
+                    if(gameInfo.tokenExpire !== null && gameInfo.isStarted){
+                        // トークンの有効期限が過ぎていれば更新
+                        if(gameInfo.tokenExpire < now){
+                            const expire = 15;
+                            gameInfo.token = require('crypto').randomBytes(12).toString('hex');
+                            gameInfo.tokenExpire = new Date(new Date().getTime() + expire*1000);
+                            if((gameInfo.users.length - 1) <= gameInfo.next){
+                                gameInfo.next = 0;
+                            }else{
+                                gameInfo.next += 1;
+                            }
+                            io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
+                            console.debug("Token has been updated!");
+                            redisJsonSet(gameInfo.id, gameInfo);
+                        }
+                    }
+                });
+            }
+        }
+    }, 2000);
 
     // Socket.io ルーティング
     io.sockets.on('connection', socket => {
@@ -91,7 +117,7 @@ module.exports = (io) => {
                         if(error){
                             console.error(`[Redis]ERROR ${error}`);
                             sendError(socket);
-                        }else{
+                        }else if(gameInfo != null){
                             let numOfUsers = gameInfo.users.length;
                             console.debug(`[DEBUG] ${gameInfo.id} has ${numOfUsers} now.`);
                             socket._gameId = waitingGameId;
@@ -111,6 +137,7 @@ module.exports = (io) => {
                                     redis.del('rooms-waiting');
                                 }
                                 // ゲーム開始のシグナルを送る
+                                gameInfo.isStarted = true;
                                 io.to(socket._gameId).emit('start', {'n':numOfUsers + 1});
                                 io.to(gameInfo.users[0]).emit('turn', {token:gameInfo.token});
                                 console.debug(`First user is ${gameInfo.users[0]}`);
@@ -136,7 +163,8 @@ module.exports = (io) => {
                         next: 0,
                         token: require('crypto').randomBytes(6).toString('hex'),
                         tokenExpire: "",
-                        cardTmp: null
+                        cardTmp: null,
+                        isStarted: false
                     };
                     // ルームを新規作成して登録
                     socket._gameId = gameInfo.id;
