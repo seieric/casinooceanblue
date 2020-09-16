@@ -201,17 +201,18 @@ module.exports = (io) => {
         // トリガー別の処理
         // カードの照合
         socket.on('cardOpen', (data) => {
-            console.debug("Receive card opening.");
-            console.log(JSON.stringify(data));
-            let gameId = socket._gameId;
+            console.debug("[DEBUG]Receive card opening.");
+            console.debug(JSON.stringify(data));
+            const gameId = socket._gameId;
             redisJsonGet(gameId, (error, gameInfo) => {
                 if(!error){
                     // トークンを照合
                     if(data.token === gameInfo.token){
-                        console.debug("User authorized.");
+                        console.debug("[DEBUG]User authorized.");
                         let res;
                         if(gameInfo.cardTmp != null){
-                            console.debug("HAAAA!");
+                            // 2枚目の処理
+                            console.debug("[DEBUG]Second card.");
                             let firstCard = gameInfo.cards[gameInfo.cardTmp];
                             let secondCard = gameInfo.cards[data.cardPos];
                             // 2つのカードが一致するかどうか
@@ -223,27 +224,30 @@ module.exports = (io) => {
                                 io.to(socket.id).emit('turn', {token: gameInfo.token});
                                 console.debug("[DEBUG]Card hit!");
                             }else{
-                                // 他のユーザーの版になる
+                                // トークンを更新
+                                gameInfo.token = require('crypto').randomBytes(6).toString('hex');
+                                // 他のユーザーの番になる
                                 io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
-                                console.debug(`[DEBUG]${gameInfo.users[gameInfo.next]}'s turn.`);
+                                console.debug(`[DEBUG]Client(${gameInfo.users[gameInfo.next]})'s turn.`);
                                 if(gameInfo.next === (gameInfo.users.length - 1)){
                                     gameInfo.next = 0;
                                 }else{
                                     gameInfo.next += 1;
                                 }
-                                // 初期化
-                                gameInfo.cardTmp = null;
-                                redisJsonSet(gameInfo.id, gameInfo);
                             }
+                            // 初期化
+                            gameInfo.cardTmp = null;
+                            redisJsonSet(gameInfo.id, gameInfo);
                             res = {
                                 cards: [data.cardPos, gameInfo.cards[data.cardPos]]
                             };
                         }else{
+                            // 1枚目の処理
+                            console.debug("[DEBUG]First card.");
                             gameInfo.cardTmp = data.cardPos;
                             res = {
                                 cards: [data.cardPos, gameInfo.cards[data.cardPos]]
                             };
-                            io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
                         }
                         let isFinished = true;
                         gameInfo.cards.some((v,i) => {
@@ -251,7 +255,7 @@ module.exports = (io) => {
                                 isFinished = false;
                             }
                         });
-                        redisJsonSet(gameInfo);
+                        redisJsonSet(gameId, gameInfo);
                         if(isFinished){
                             io.to(gameId).emit('finish', {status: "success", rank: 100, score: socket._score});
                         }else{
