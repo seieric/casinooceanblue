@@ -29,8 +29,8 @@ socket.on('cardRes', (data) => {
             setTimeout(() => {
                 $('li.card').eq(previous.pos).html(`<img src="images/opend.jpg">`);
                 $('li.card').eq(data.cards[0]).html(`<img src="images/opend.jpg">`);
-                $('li.card').eq(previous.pos).addClass('card-opend').removeClass('card-opend');
-                $('li.card').eq(data.cards[0]).addClass('card').removeClass('card-opend');
+                $('li.card').eq(previous.pos).addClass('card-opend');
+                $('li.card').eq(data.cards[0]).addClass('card-opend');
             }, 2000);
             // reset
             previous.value = previous.pos = -1;
