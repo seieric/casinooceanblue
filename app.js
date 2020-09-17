@@ -30,13 +30,14 @@ app.use(function (req, res, next) {
 
 app.use(function (req, res, next) {
   let sslUrl;
-  if (process.env.NODE_ENV === 'production' &&
-      req.headers['x-forwarded-proto'] !== 'https' && req.hostname !== 'oceanblue.toinfes.jp') {
-
+  if (process.env.NODE_ENV === 'production' && req.hostname.endsWith('herokuapp.com')) {
+    sslUrl = ['https://oceanblue.toinfes.jp', req.url].join('');
+    return res.redirect(sslUrl);
+  }
+  if(process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
     sslUrl = ['https://', req.hostname, req.url].join('');
     return res.redirect(sslUrl);
   }
-
   return next();
 });
 app.use(logger('dev'));
