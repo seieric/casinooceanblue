@@ -217,6 +217,7 @@ module.exports = (io) => {
                             let secondCard = gameInfo.cards[data.cardPos];
                             // 2つのカードが一致するかどうか
                             if(firstCard === secondCard){
+                                // 一致したら加算
                                 socket._score += 100;
                                 // カード情報を削除
                                 gameInfo.cards[gameInfo.cardTmp] = gameInfo.cards[data.cardPos] = null;
@@ -227,7 +228,11 @@ module.exports = (io) => {
                                 // トークンを更新
                                 gameInfo.token = require('crypto').randomBytes(6).toString('hex');
                                 // 他のユーザーの番になる
-                                io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
+                                if(gameInfo.users[gameInfo.next] !== null){
+                                    io.to(gameInfo.users[gameInfo.next]).emit('turn', {token: gameInfo.token});
+                                }else{
+                                    io.to(gameInfo.users[0]).emit('turn', {token: gameInfo.token});
+                                }
                                 console.debug(`[DEBUG]Client(${gameInfo.users[gameInfo.next]})'s turn.`);
                                 if(gameInfo.next === (gameInfo.users.length - 1)){
                                     gameInfo.next = 0;
@@ -257,7 +262,9 @@ module.exports = (io) => {
                         });
                         redisJsonSet(gameId, gameInfo);
                         if(isFinished){
-                            io.to(gameId).emit('finish', {status: "success", rank: 100, score: socket._score});
+                            io.sockets.clients(gameId).forEach((client) => {
+                               io.to(client.id).emit('finish', {status: "success", rank: 100, score: client._score})
+                            });
                         }else{
                             io.to(gameId).emit('cardRes', res);
                         }
@@ -278,6 +285,15 @@ module.exports = (io) => {
                 if(error){
                     console.log("[Redis]" + error, "Unable to access game data.");
                 }else if(gameInfo != null){
+                    // 退出したユーザーが次のユーザーのとき
+                    if(gameInfo.users[gameInfo.next] === socket.id){
+                        const nextUser = gameInfo.users[gameInfo.next + 1];
+                        if(nextUser !== null){
+                            gameInfo.next = 0;
+                        }else{
+                            gameInfo.next += 1;
+                        }
+                    }
                     gameInfo.users.some((v, i) => {
                         if (v===socket.id) gameInfo.users.splice(i,1);
                     });
@@ -297,7 +313,6 @@ module.exports = (io) => {
                                 }
                             }
                         });
-                        redis.del(socket._gameId);
                     }else{
                         redisJsonSet(socket._gameId, gameInfo);
                     }

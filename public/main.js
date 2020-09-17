@@ -32,9 +32,9 @@ socket.on('cardRes', (data) => {
                 $('li.card').eq(data.cards[0]).html(`<img src="images/opend.jpg">`);
                 $('li.card').eq(previous.pos).addClass('card-finished');
                 $('li.card').eq(data.cards[0]).addClass('card-finished');
+                // reset
+                previous.value = previous.pos = -1;
             }, 2000);
-            // reset
-            previous.value = previous.pos = -1;
         }else if(previous.pos === -1){
             // 1枚目のカードのとき
             previous.pos = data.cards[0];
