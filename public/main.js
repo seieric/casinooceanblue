@@ -45,8 +45,8 @@ socket.on('cardRes', (data) => {
             setTimeout(() => {
                 $('li.card').eq(previous.pos).html(`<img src="images/card.jpg">`);
                 $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
+                previous.value = previous.pos = -1;
             }, 1500);
-            previous.value = previous.pos = -1;
         }
     }
 });
