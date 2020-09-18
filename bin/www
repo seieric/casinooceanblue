@@ -4,7 +4,10 @@
  * Module dependencies.
  */
 
-if(process.env.NODE_ENV === 'production') require('sqreen');
+if(process.env.NODE_ENV === 'production'){
+  require('sqreen');
+  require('newrelic');
+}
 const app = require('../app');
 const debug = require('debug')('toinfes-game:server');
 const http = require('http');

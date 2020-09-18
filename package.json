@@ -21,6 +21,7 @@
     "socket.io-redis": "~5.4.0",
     "pg": "~8.3.3",
     "compression": "~1.7.4",
-    "sqreen": "~1.52.2"
+    "sqreen": "~1.52.2",
+    "newrelic": "~6.13.0"
   }
 }
