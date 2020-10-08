@@ -22,12 +22,38 @@
         #gameField{
             margin: 10px;
             border-radius: 10px;
+            padding: 0;
+            border: #1da1f2 solid 1px;
         }
         .card, .cardOpend{
             display: inline-block;
             text-decoration: none;
             height: auto;
             margin: 4px;
+        }
+        div.wrap{
+            max-width: 1000px;
+        }
+        @media screen and (max-width: 750px){
+            #gameField{
+                margin: 0;
+            }
+            div.wrap{
+                padding: 5px!important;
+            }
+            .card img{
+                width: 10vh;
+                height: auto;
+            }
+            .card{
+                margin: 1px;
+            }
+        }
+        @media screen and (max-width: 300px){
+            .card img{
+                width: 9vh;
+                height: auto;
+            }
         }
         .card img{
             border-radius: 10px;
@@ -107,7 +133,7 @@
     <p class="text-center" id="loaderMsg">他のプレイヤーの参加を待っています...</p>
 </div>
 <div id="game" style="visibility: hidden">
-    <div class="d-flex w-100 h-100 p-3 mx-auto flex-column text-center">
+    <div class="d-flex w-100 h-100 p-3 mx-auto flex-column text-center wrap">
         <ul id="gameField"></ul>
     </div>
     <nav class="navbar fixed-bottom navbar-expand-sm gm-ctrl">
