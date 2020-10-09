@@ -2,7 +2,7 @@
 let playerName = localStorage.getItem('playerName');
 let authToken = localStorage.getItem('authToken');
 if(playerName == null || playerName === "" || authToken == null || authToken === ""){
-    window.location.replace("start.html");
+    window.location.replace("start");
 }
 // サーバー接続処理
 $("#loaderMsg").text("サーバーに接続しています...");
@@ -117,5 +117,5 @@ socket.on('finish', (data) => {
         }
     }
     sessionStorage.setItem('result', JSON.stringify(result));
-    location.replace("result.html");
+    location.replace("result");
 });

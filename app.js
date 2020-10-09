@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 // compression
 const compression = require('compression');
 
+const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
+app.use('/', indexRouter);
 app.use('/api/', apiRouter);
 
 // catch 404 and forward to error handler

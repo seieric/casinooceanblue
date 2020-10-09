@@ -74,7 +74,7 @@
                         $.post('/api/start', {token, playerName, authToken}, (data) => {
                             if(data.status === "success" && data.token != null && data.token !== ""){
                                 localStorage.setItem('authToken', data.token);
-                                window.location.href="/game.html";
+                                window.location.href="/game";
                             }else{
                                 alert("認証に失敗しました。");
                             }
