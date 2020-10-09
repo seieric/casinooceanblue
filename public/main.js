@@ -51,10 +51,9 @@ socket.on('cardRes', (data) => {
     }
 });
 // 自分の番が回ってきたとき
-socket.on('turn', (data) => {
+socket.on('turn', () => {
     console.log('Now, your turn.');
     $("#turnDisplay").text("あなたの番です。");
-    const token = data.token;
     let count = 15;
     const expire = new Date(new Date().getTime() + count * 1000);
     const counter = setInterval(() => {
@@ -67,23 +66,21 @@ socket.on('turn', (data) => {
         }
     }, 1000);
     $('li.card').on('click', function(){
-        if(token != null){
-            const index = $('li.card').index(this);
-            cards.push(index);
-            if(cards.length <= 2){
-                let data = {
-                    token: token,
-                    cardPos: index
-                }
-                socket.emit('cardOpen', data);
+        const index = $('li.card').index(this);
+        cards.push(index);
+        if(cards.length <= 2){
+            let data = {
+                cardPos: index
             }
-            if(cards.length === 2){
-                $('li.card').off();
-                cards = [];
-                clearInterval(counter);
-                $('#counter').text("");
-                $("#turnDisplay").text("他の人の番になりました。");
-            }
+            socket.emit('cardOpen', data);
+        }
+        if(cards.length === 2){
+            $('li.card').off();
+            cards = [];
+            clearInterval(counter);
+            console.log("CLear!");
+            $('#counter').text("");
+            $("#turnDisplay").text("他の人の番になりました。");
         }
     });
 });
