@@ -52,9 +52,11 @@ app.use(bodyParser.json());
 app.use('/', indexRouter);
 app.use('/api/', apiRouter);
 
-// catch 404 and forward to error handler
+// catch 404
 app.use(function(req, res, next) {
-  next(createError(404, 'お探しのページは見つかりませんでした。'));
+    res.status(404);
+    res.locals.error = {};
+    res.render('error', {title: "404 Not Found", message: "お探しのページは見つかりませんでした。"});
 });
 
 // error handler
@@ -65,7 +67,7 @@ app.use(function(err, req, res) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.render('error', {title: "エラー", message: "要求を完了できませんでした。"});
 });
 
 module.exports = app;
