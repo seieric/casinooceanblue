@@ -25,6 +25,7 @@ module.exports = (io) => {
                 socket._name = result.rows[0].name;
                 socket._gameId = "";
                 socket._score = 0;
+                socket._token = token;
                 isAuthenticated = true;
             }
             if(!isAuthenticated){
@@ -37,26 +38,27 @@ module.exports = (io) => {
     // 番になるユーザーを定期的に更新
     setInterval(() => {
         for(let gameId in gameStore){
-            if(gameStore.hasOwnProperty(gameId)) {
-                const game = gameStore[gameId];
-                if(game.users.length >= 2 && game.tokenExpire !== null && game.isStarted){
-                    const now = new Date();
-                    // 有効期限が過ぎていれば更新
-                    if(game.tokenExpire < now){
-                        game.tokenExpire = new Date(now.getTime() + 15*1000);
-                        if((game.users.length - 1) <= game.next){
-                            game.next = 0;
-                        }else{
-                            game.next += 1;
-                        }
-                        io.to(game.users[game.next]).emit('turn');
-                        console.debug(`[DEBUG]Game(${game.id})has been updated!`);
-                        gameStore[gameId] = game;
+            const game = gameStore[gameId];
+            if(game.users.length >= 2 && game.tokenExpire !== null && game.isStarted){
+                const now = new Date();
+                // 有効期限が過ぎていれば更新
+                if(game.tokenExpire < now){
+                    game.tokenExpire = new Date(now.getTime() + 15*1000);
+                    if((game.users.length - 1) <= game.next){
+                        game.next = 0;
+                    }else{
+                        game.next += 1;
                     }
+                    io.to(game.id).emit('reset');
+                    setTimeout(() => {
+                        io.to(game.users[game.next]).emit('turn');
+                    }, 500);
+                    console.debug(`[DEBUG]Game(${game.id})has been updated!: ${game}`);
+                    gameStore[game.id] = game;
                 }
             }
         }
-    }, 2000);
+    }, 5000);
 
     // Socket.io ルーティング
     io.sockets.on('connection', socket => {
@@ -139,7 +141,7 @@ module.exports = (io) => {
                     let firstCard = game.cards[game.cardTmp];
                     let secondCard = game.cards[data.cardPos];
                     // 2つのカードが一致するかどうか
-                    if(firstCard === secondCard){
+                    if(firstCard === secondCard && firstCard != null && secondCard != null){
                         // 一致したら加算
                         socket._score += 100;
                         // カード情報を削除
@@ -153,7 +155,8 @@ module.exports = (io) => {
                             setTimeout(() => {io.to(game.users[game.next]).emit('turn');}, 1000);
                         }else{
                             setTimeout(() => {io.to(game.users[0]).emit('turn');}, 1000);
-c                        }
+                        }
+                        io.to(game.id).emit('reset');
                         console.debug(`[DEBUG]Client(${game.users[game.next]})'s turn.`);
                         if(game.next === (game.users.length - 1)){
                             game.next = 0;
@@ -182,9 +185,22 @@ c                        }
                     }
                 });
                 if(isFinished){
+                    let results = [];
                     io.sockets.clients(gameId).forEach((client) => {
-                        io.to(client.id).emit('finish', {status: "success", rank: 100, score: client._score})
+                        results.push(client.id);
+                        results.push(client._score);
                     });
+                    for (let i=1;i<(results.length/2)-1;i=2*i-1){
+                        if(results[i] < results[i+2]){
+                            let tmp = results[i+2];
+                            results[i+2] = results[i];
+                            results[i] = tmp;
+                        }
+                    }
+                    for(let i=0;i<(results.length/2-1);i=2*i){
+                        io.to(results[i]).emit('finish', {status: 'success', rank:i+1, score: results[i+1]});
+                    }
+                    delete gameStore[gameId];
                 }else{
                     io.to(gameId).emit('cardRes', res);
                 }
@@ -194,14 +210,12 @@ c                        }
         // 切断時の処理
         socket.on('disconnect', () => {
             console.log(`[Socket.io]Client(${socket.id}) disconnected.`);
-            const gameId = socket._gameId;
-            const game = gameStore[gameId];
-
+            const game = gameStore[socket._gameId];
             if(game != null){
                 // 退出したユーザーが次のユーザーのとき
                 if(game.users[game.next] === socket.id){
                     const nextUser = game.users[game.next + 1];
-                    if(nextUser !== null){
+                    if(nextUser == null){
                         game.next = 0;
                     }else{
                         game.next += 1;
@@ -211,13 +225,13 @@ c                        }
                     if (v===socket.id) game.users.splice(i,1);
                 });
                 if(game.users.length <= 1){
-                    io.to(socket._gameId).emit('finish', {'status':'exception'});
+                    io.to(game.id).emit('finish', {'status':'exception'});
                     waitingStore.some((v, i) => {
-                        if (v===socket._gameId) waitingStore.splice(i,1);
+                        if (v===game.id) waitingStore.splice(i,1);
                     });
-                    delete gameStore[gameId];
+                    delete gameStore[game.id];
                 }else{
-                    gameStore[gameId] = game;
+                    gameStore[game.id] = game;
                 }
             }
         });
