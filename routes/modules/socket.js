@@ -49,12 +49,11 @@ module.exports = (io) => {
                     }else{
                         game.next += 1;
                     }
-                    io.to(game.id).emit('reset');
                     setTimeout(() => {
                         io.to(game.users[game.next]).emit('turn');
-                    }, 500);
-                    console.debug(`[DEBUG]Game(${game.id})has been updated!: ${game}`);
-                    gameStore[game.id] = game;
+                        console.debug(`[DEBUG]Game(${game.id})has been updated!: ${JSON.stringify(game)}`);
+                        gameStore[game.id] = game;
+                    }, 2000);
                 }
             }
         }
@@ -134,75 +133,81 @@ module.exports = (io) => {
             // トークンを照合
             if(socket.id === game.users[game.next]){
                 console.debug("[DEBUG]Client authorized.");
-                let res;
-                if(game.cardTmp != null){
-                    // 2枚目の処理
-                    console.debug("[DEBUG]Second card.");
-                    let firstCard = game.cards[game.cardTmp];
-                    let secondCard = game.cards[data.cardPos];
-                    // 2つのカードが一致するかどうか
-                    if(firstCard === secondCard && firstCard != null && secondCard != null){
-                        // 一致したら加算
-                        socket._score += 100;
-                        // カード情報を削除
-                        game.cards[game.cardTmp] = game.cards[data.cardPos] = null;
-                        // 同じユーザーがもう一度プレイ
-                        setTimeout(() => {io.to(socket.id).emit('turn');}, 1000);
-                        console.debug("[DEBUG]Card hit!");
+                if(game.cards[data.cardPos] != null){
+                    let res;
+                    if(game.cardTmp != null && game.cardTmp !== data.cardPos){
+                        // 2枚目の処理
+                        console.debug("[DEBUG]Second card.");
+                        let firstCard = game.cards[game.cardTmp];
+                        let secondCard = game.cards[data.cardPos];
+                        // 2つのカードが一致するかどうか
+                        if(firstCard === secondCard && firstCard != null && secondCard != null){
+                            // 一致したら加算
+                            socket._score += 100;
+                            res = {
+                                cards: [data.cardPos, game.cards[data.cardPos], game.cardTmp, game.cards[game.cardTmp]],
+                                hit: true
+                            }
+                            // カード情報を削除
+                            game.cards[game.cardTmp] = game.cards[data.cardPos] = null;
+                            // 同じユーザーがもう一度プレイ
+                            setTimeout(() => {io.to(socket.id).emit('turn');}, 1000);
+                            console.debug("[DEBUG]Card hit!");
+                        }else{
+                            // 他のユーザーの番になる
+                            if(game.users[game.next] !== null){
+                                setTimeout(() => {io.to(game.users[game.next]).emit('turn');}, 1000);
+                            }else{
+                                setTimeout(() => {io.to(game.users[0]).emit('turn');}, 1000);
+                            }
+                            console.debug(`[DEBUG]Client(${game.users[game.next]})'s turn.`);
+                            if(game.next === (game.users.length - 1)){
+                                game.next = 0;
+                            }else{
+                                game.next += 1;
+                            }
+                            res = {
+                                cards: [data.cardPos, game.cards[data.cardPos]]
+                            };
+                        }
+                        game.tokenExpire = new Date(new Date().getTime() + 16*1000);
+                        // 初期化
+                        game.cardTmp = null;
                     }else{
-                        // 他のユーザーの番になる
-                        if(game.users[game.next] !== null){
-                            setTimeout(() => {io.to(game.users[game.next]).emit('turn');}, 1000);
-                        }else{
-                            setTimeout(() => {io.to(game.users[0]).emit('turn');}, 1000);
-                        }
-                        io.to(game.id).emit('reset');
-                        console.debug(`[DEBUG]Client(${game.users[game.next]})'s turn.`);
-                        if(game.next === (game.users.length - 1)){
-                            game.next = 0;
-                        }else{
-                            game.next += 1;
-                        }
+                        // 1枚目の処理
+                        console.debug("[DEBUG]First card.");
+                        game.cardTmp = data.cardPos;
+                        res = {
+                            cards: [data.cardPos, game.cards[data.cardPos]]
+                        };
                     }
-                    // 初期化
-                    game.cardTmp = null;
-                    res = {
-                        cards: [data.cardPos, game.cards[data.cardPos]]
-                    };
-                }else{
-                    // 1枚目の処理
-                    console.debug("[DEBUG]First card.");
-                    game.cardTmp = data.cardPos;
-                    res = {
-                        cards: [data.cardPos, game.cards[data.cardPos]]
-                    };
-                }
-                gameStore[gameId] = game;
-                let isFinished = true;
-                game.cards.some((v,i) => {
-                    if(v !== null){
-                        isFinished = false;
-                    }
-                });
-                if(isFinished){
-                    let results = [];
-                    io.sockets.clients(gameId).forEach((client) => {
-                        results.push(client.id);
-                        results.push(client._score);
+                    gameStore[gameId] = game;
+                    let isFinished = true;
+                    game.cards.some((v,i) => {
+                        if(v !== null){
+                            isFinished = false;
+                        }
                     });
-                    for (let i=1;i<(results.length/2)-1;i=2*i-1){
-                        if(results[i] < results[i+2]){
-                            let tmp = results[i+2];
-                            results[i+2] = results[i];
-                            results[i] = tmp;
+                    if(isFinished){
+                        let results = [];
+                        io.sockets.clients(gameId).forEach((client) => {
+                            results.push(client.id);
+                            results.push(client._score);
+                        });
+                        for (let i=1;i<(results.length/2)-1;i=2*i-1){
+                            if(results[i] < results[i+2]){
+                                let tmp = results[i+2];
+                                results[i+2] = results[i];
+                                results[i] = tmp;
+                            }
                         }
+                        for(let i=0;i<(results.length/2-1);i=2*i){
+                            io.to(results[i]).emit('finish', {status: 'success', rank:i+1, score: results[i+1]});
+                        }
+                        delete gameStore[gameId];
+                    }else{
+                        io.to(gameId).emit('cardRes', res);
                     }
-                    for(let i=0;i<(results.length/2-1);i=2*i){
-                        io.to(results[i]).emit('finish', {status: 'success', rank:i+1, score: results[i+1]});
-                    }
-                    delete gameStore[gameId];
-                }else{
-                    io.to(gameId).emit('cardRes', res);
                 }
             }
         });

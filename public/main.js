@@ -1,10 +1,8 @@
-//セッションからトークンとプレイヤー名を取得
 let playerName = localStorage.getItem('playerName');
 let authToken = localStorage.getItem('authToken');
 if(playerName == null || playerName === "" || authToken == null || authToken === ""){
     window.location.replace("start");
 }
-// サーバー接続処理
 $("#loaderMsg").text("サーバーに接続しています...");
 const socket = io({
     transports: ['websocket'],
@@ -12,103 +10,13 @@ const socket = io({
         token: authToken
     }
 });
-// カード情報保存
 let cards = [];
-let previous = {value: -1, pos: -1};
 let isTurn = false;
 let counter;
-// サーバーに接続成功時
 socket.on("connect", () => {
     $("#loaderMsg").text("他のプレイヤーの参加を待っています...時間がかかることがあります。");
     console.log("Connected to game server.");
 });
-// カードの中身が送られてきたとき
-socket.on('cardRes', (data) => {
-    console.log("EVENT: cardRes");
-    if(data.cards[1] !== null){
-        $('li.card').eq(data.cards[0]).html(`<img src="images/card${data.cards[1]}.jpg">`);
-        if(previous.value === data.cards[1]){
-            // 1枚目のカードと2枚目が一致したとき
-            $('#counter').text("");
-            setTimeout(() => {
-                console.log('Hit!');
-                $('li.card').eq(previous.pos).html(`<img src="images/opend.jpg">`);
-                $('li.card').eq(data.cards[0]).html(`<img src="images/opend.jpg">`);
-                $('li.card').eq(previous.pos).addClass('card-finished');
-                $('li.card').eq(data.cards[0]).addClass('card-finished');
-                // reset
-                previous.value = previous.pos = -1;
-                clearInterval(counter);
-            }, 1000);
-        }else if(previous.pos === -1){
-            console.log("first");
-            // 1枚目のカードのとき
-            previous.pos = data.cards[0];
-            previous.value = data.cards[1];
-            $('li.card').eq(data.cards[0]).addClass('open-flag');
-        }else{
-            console.log("second");
-            $('#counter').text("");
-            // 2枚目のカードのとき（不一致）
-            // カードの向きを変える
-            setTimeout(() => {
-                $('li.card').eq(previous.pos).html(`<img src="images/card.jpg">`);
-                $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
-                previous.value = previous.pos = -1;
-                clearInterval(counter);
-            }, 1500);
-        }
-    }
-});
-// 自分の番が回ってきたとき
-socket.on('turn', () => {
-    isTurn = true;
-    cards = [];
-    $('.open-flag').html('<img src="images/card.jpg">');
-    console.log("EVENT: turn");
-    $("#turnDisplay").text("あなたの番です。");
-    let count = 15;
-    const expire = new Date(new Date().getTime() + count * 1000);
-    counter = setInterval(() => {
-        count--;
-        $('#counter').text(`制限時間${count}秒`);
-        if(new Date().getTime() >= expire.getTime()){
-            clearInterval(counter);
-            $("#turnDisplay").text("他の人の番になりました。");
-            $("#counter").text("");
-        }
-    }, 1000);
-    $('li.card').on('click', function(){
-        const index = $('li.card').index(this);
-        if(isTurn){
-            cards.push(index);
-            if(cards.length < 3){
-                console.log("NOTICE: first or second card clicked", cards);
-                let data = {
-                    cardPos: index
-                }
-                if(cards.length === 2){
-                    $('li.card').off();
-                    isTurn = false;
-                }
-                socket.emit('cardOpen', data);
-            }else{
-                $('li.card').off();
-                cards = [];
-                clearInterval(counter);
-                console.log("WARN: 3rd card",cards);
-                $('#counter').text("");
-                $("#turnDisplay").text("他の人の番になりました。");
-            }
-        }
-    });
-});
-socket.on('reset', () => {
-    console.log("EVENT: reset");
-    $('.open-flag').html('<img src="images/card.jpg">');
-    isTurn = false;
-});
-// 開始処理
 socket.on('start', (data) => {
     for (let i = 0; i < 20; i++){
         $("#gameField").append('<li class="card"><img src="images/card.jpg"></li>');
@@ -119,11 +27,10 @@ socket.on('start', (data) => {
     $("#game").css('visibility', 'visible');
     console.log("Game started.");
 });
-// 終了処理
 socket.on('finish', (data) => {
     $("#turnDisplay").text("Finished!!");
+    clearInterval(counter);
     $("#counter").text("");
-    console.log("Finished!")
     let result;
     if(data.status === 'exception'){
         result = {
@@ -139,4 +46,63 @@ socket.on('finish', (data) => {
     }
     sessionStorage.setItem('result', JSON.stringify(result));
     location.replace("result");
+});
+socket.on('cardRes', (data) => {
+    console.log("EVENT: cardRes");
+    if(data.cards[0] !== null){
+        if(data.hit){
+            console.log("HIT!");
+            $('li.card').eq(data.cards[0]).removeClass('open-flag')
+                .addClass('card-finished')
+                .html(`<img src="images/opend.jpg">`);
+            $('li.card').eq(data.cards[2]).removeClass('open-flag')
+                .addClass('card-finished')
+                .html(`<img src="images/opend.jpg">`);
+        }else{
+            $('li.card').eq(data.cards[0]).addClass('open-flag').html(`<img src="images/card${data.cards[1]}.jpg">`);
+            // カードの向きを変える
+            setTimeout(() => {
+                $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
+            }, 2000);
+        }
+    }
+});
+socket.on('turn', () => {
+    isTurn = true;
+    cards = [];
+    console.log("EVENT: turn");
+    clearInterval(counter);
+    $("#turnDisplay").html("<b>あなたの番です。</b>");
+    if(true){
+        let count = 15;
+        const expire = new Date(new Date().getTime() + count*1000);
+        counter = setInterval(() => {
+            count--;
+            $('#counter').text(`制限時間${count}秒`);
+            if(new Date().getTime() >= expire.getTime()){
+                clearInterval(counter);
+                $("#turnDisplay").text("他の人の番です。");
+                $("#counter").text("");
+            }
+        }, 1000);
+    }
+    $('li.card').on('click', function(){
+        const index = $('li.card').index(this);
+        if(isTurn){
+            if(cards.length < 3 && cards.indexOf(index) === -1){
+                console.log("NOTICE: card clicked", cards);
+                socket.emit('cardOpen', {cardPos: index});
+                if(cards.length === 2){
+                    clearInterval(counter);
+                    $('li.card').off();
+                    $("#counter").text("");
+                    $("#turnDisplay").text("他の人の番です。");
+                    isTurn = false;
+                    cards = [];
+                }else{
+                    cards.push(index);
+                }
+            }
+        }
+    });
 });
