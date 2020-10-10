@@ -52,17 +52,17 @@ socket.on('cardRes', (data) => {
     if(data.cards[0] !== null){
         if(data.hit){
             console.log("HIT!");
-            $('li.card').eq(data.cards[0]).removeClass('open-flag')
-                .addClass('card-finished')
+            $('li.card').eq(data.cards[0]).addClass('card-finished')
                 .html(`<img src="images/opend.jpg">`);
-            $('li.card').eq(data.cards[2]).removeClass('open-flag')
-                .addClass('card-finished')
+            $('li.card').eq(data.cards[2]).addClass('card-finished')
                 .html(`<img src="images/opend.jpg">`);
         }else{
-            $('li.card').eq(data.cards[0]).addClass('open-flag').html(`<img src="images/card${data.cards[1]}.jpg">`);
+            $('li.card').eq(data.cards[0]).html(`<img src="images/card${data.cards[1]}.jpg">`);
             // カードの向きを変える
             setTimeout(() => {
-                $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
+                if(!$('li.card').eq((data.cards[0])).hasClass('card-finished')){
+                    $('li.card').eq(data.cards[0]).html(`<img src="images/card.jpg">`);
+                }
             }, 2000);
         }
     }
