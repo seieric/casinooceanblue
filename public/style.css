@@ -52,7 +52,9 @@ html, body{
     color: #00ffff;
   }
   .intl-heading{
-    color: #333;
+    font-family: Arial, sans-serif;
+    color: #0000ff;
+    font-weight: 600;
   }
   .lp-heading, .intl-brand-en{
     font-family: 'Lemonada', cursive;
@@ -189,9 +191,6 @@ html, body{
     .lp-top{
       background: linear-gradient(135deg, #0000ff, #00ff80);
     }
-    .lp-img{
-      visibility: hidden;
-    }
     .lp-heading{
       font-size: 2.5em;
     }
@@ -202,4 +201,5 @@ html, body{
 .intl-lead{
   font-size: 1.1em;
   line-height: 2em;
+
 }
