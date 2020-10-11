@@ -47,8 +47,8 @@
                 <div class="col" style="background-color: #FFFFFF;">
                     <div class="row">
                         <div class="col" style="background-color: #ffff00;">
-                            <h2 class="text-center" style="background-color: #ffff00;color: #000000;">1HOUR</h2>
-                            <p class="text-center" style="background-color: #ffff00;">1時間ごとのベスト10</p>
+                            <h2 class="text-center" style="background-color: #ffff00;color: #000000;">TOTAL</h2>
+                            <p class="text-center" style="background-color: #ffff00;">過去のベスト10</p>
                         </div>
                     </div>
                 </div>
@@ -108,12 +108,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha512-I5TkutApDjnWuX+smLIPZNhw+LhTd8WrQhdCKsxCFRSvhFx2km8ZfEpNIhF9nq04msHhOkE8BMOBj5QE07yhMA==" crossorigin="anonymous"></script>
     <script>
         $.getJSON('/api/ranking', (data) => {
-            let day = data.day;
-            if(day.length === 0){
+            let total = data.total;
+            if(total.length === 0){
                 $("#dayRanking").append(`<tr><td>0</td><td>まだデータがありません。</td><td>No data.</td></tr>`);
             }else{
-                for(let i=0;i<day.length;i++){
-                    let rec = `<tr><td>${i+1}</td><td>${day[i].name}</td><td>${day[i].score}</td></tr>`
+                for(let i=0;i<total.length;i++){
+                    let rec = `<tr><td>${i+1}</td><td>${total[i].name}</td><td>${total[i].score}</td></tr>`
                     $("#dayRanking").append(rec);
                 }
             }

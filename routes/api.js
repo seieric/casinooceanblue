@@ -5,18 +5,33 @@ const reCaptchaSecret = '6Lds1rwZAAAAAMl_dCpHQQ_7w0v2dhpfbAEQL3MN';
 const db = require('../routes/modules/database');
 
 router.get('/ranking', function (req, res) {
-   let ranking = {
-       day: [
+    const query = {
+        text: "select * from results order by score desc, id desc limit 10;"
+    }
+    db.query(query, (err, result) => {
+        if(err){
+            res.status(500);
+            res.send('DB ERROR');
+        }else {
+            let ranking = {total: [], hour: []};
+            let i = 0;
+            while (i < result.rowCount) {
+                delete result.rows[i].id;
+                delete result.rows[i].created_at;
+                ranking.total.push(result.rows[i]);
+                i++;
+            }
+            res.json(ranking);
+        }
+    });
+    let ranking = {
+        day: [
            {name: "tesuto", score: 180},
            {name: "Google", score: 54},
            {name: "Github", score: 33}
        ],
-       hour: [
-           {name: "tesuto", score: 360},
-           {name: "Google", score: 348}
-       ]
+       hour: []
    };
-   res.json(ranking);
 });
 
 //トークンとプレイヤー名の生成・更新
