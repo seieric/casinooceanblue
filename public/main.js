@@ -106,3 +106,7 @@ socket.on('turn', () => {
         }
     });
 });
+socket.on('disconnect', () => {
+    alert("サーバーから切断されました。終了します。");
+    window.location.replace('/');
+});
